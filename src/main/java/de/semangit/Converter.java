@@ -3,6 +3,8 @@ package de.semangit;
 import com.opencsv.CSVReader;
 
 import java.io.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class Converter implements Runnable {
@@ -2250,6 +2252,150 @@ public class Converter implements Runnable {
         }
     }
 
+    //TODO: This does not belong inside the combined.ttl file, but into a separate void.ttl file. Then we can also add meta info such as number of triples etc.
+    private static void printVoID(BufferedWriter w)
+    {
+        try {
+            w.write("@prefix void: <http://rdfs.org/ns/void#> .");
+            w.newLine();
+            w.write("@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .");
+            w.newLine();
+            w.write("@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .");
+            w.newLine();
+            w.write("@prefix owl: <http://www.w3.org/2002/07/owl#> .");
+            w.newLine();
+            w.write("@prefix dcterms: <http://purl.org/dc/terms/> .");
+            w.newLine();
+            w.write("@prefix foaf: <http://xmlns.com/foaf/0.1/> .");
+            w.newLine();
+            //w.write("@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .");
+            //w.newLine();
+            w.write("@prefix waiver: <http://vocab.org/waiver/terms/norms> .");
+            w.newLine();
+            //w.write("@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .");
+            //w.newLine();
+
+            w.write("@prefix meta: <#>");
+            w.newLine();
+
+            w.write("<> a void:DatasetDescription;");
+            w.newLine();
+            w.write("dcterms:title \"A VoID description of the SemanGit dataset\";");
+            w.newLine();
+            w.write("dcterms:creator meta:Dennis;");
+            w.newLine();
+            w.write("dcterms:creator meta:Matthias;");
+            w.newLine();
+            w.write("dcterms:creator meta:Damien;");
+            w.newLine();
+            w.write("foaf:primaryTopic meta:SemanGit .");
+            w.newLine();
+
+
+            w.write("meta:SemanGit a void:Dataset;");
+            w.newLine();
+            w.write("foaf:homepage <http://semangit.de/>;");
+            w.newLine();
+            w.write("foaf:page <http://semangit.de/downloads/>;"); //TODO
+            w.newLine();
+            w.write("dcterms:title \"SemanGit\";");
+            w.newLine();
+            w.write("dcterms:description \"RDF data extracted from GitHub. More git repository providers to be added.\";");
+            w.newLine();
+            w.write("dcterms:contributor meta:Dennis;");
+            w.newLine();
+            w.write("dcterms:contributor meta:Matthias;");
+            w.newLine();
+            w.write("dcterms:contributor meta:Damien;");
+            w.newLine();
+            DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+            Date date = new Date();
+            w.write("dcterms:modified \"" + dateFormat.format(date) + "\"^^xsd:date;");
+            w.newLine();
+            //w.write("dcterms:publisher <>;");
+            //w.newLine();
+
+            /*
+            w.write("dcterms:license <>;");
+            w.newLine();
+            w.write("waiver:norms <>;");
+            w.newLine();
+            w.write("waiver:waiver <>;");
+            w.newLine();
+            */
+
+            w.write("dcterms:subject <http://dbpedia.org/resource/Computer_Science>;"); //todo add more
+            w.newLine();
+            w.write("void:feature <http://www.w3.org/ns/formats/Turtle>;");
+            w.newLine();
+
+            //w.write("void:sparqlEndpoint <http://semangit.de/sparql>;");
+            //w.newLine();
+
+            //w.write("void:dataDump <http://semangit.de/latest/>;"); //todo
+            //w.newLine();
+
+            w.write("void:exampleResource <>;");
+            w.newLine();
+            w.write("void:exampleResource <>;");
+            w.newLine();
+            w.write("void:exampleResource <>;");
+            w.newLine();
+
+            w.write("void:uriSpace \"http://semangit.de/\";");
+            w.newLine();
+
+            //void:vocabulary -- give URIs of all vocabularies used?!
+
+            /*
+            w.write("void:triples ;");
+            w.newLine();
+            w.write("void:entities ;");
+            w.newLine();
+            w.write("void:classes ;");
+            w.newLine();
+            w.write("void:properties ;");
+            w.newLine();
+            w.write("void:distinctSubjects ;");
+            w.newLine();
+            w.write("void:distinctObjects ;");
+            w.newLine();
+            */
+
+            w.write(" .");
+            w.newLine();
+
+            w.write("meta:Dennis a foaf:Person;");
+            w.newLine();
+            w.write("rdfs:label \"Dennis Oliver Kubitza\";");
+            w.newLine();
+            w.write("foaf:mbox <mailto:dennis.kubitza@iais.fraunhofer.de> .");
+            w.newLine();
+
+            w.write("meta:Matthias a foaf:Person;");
+            w.newLine();
+            w.write("rdfs:label \"Matthias Böckmann\";");
+            w.newLine();
+            w.write("foaf:mbox <mailto:matthias.boeckmann@iais.fraunhofer.de> .");
+            w.newLine();
+
+            w.write("meta:Damien a foaf:Person;");
+            w.newLine();
+            w.write("rdfs:label \"Damien Graux\";");
+            w.newLine();
+            w.write("foaf:mbox <mailto:damien.graux@iais.fraunhofer.de> .");
+            w.newLine();
+
+
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            errorCtr++;
+        }
+        //not closing w, as we still need it afterwards
+    }
+
 
     private static void appendFileToOutput(String directory, String fileName)
     {
@@ -2260,6 +2406,7 @@ public class Converter implements Runnable {
                 try {
                     BufferedWriter writer = new BufferedWriter(new FileWriter(outPath), 32768);
                     final Set<Map.Entry<String, String>> entries = prefixTable.entrySet();
+                    printVoID(writer);
                     writer.write("@prefix semangit: <http://semangit.de/ontology/>.");
                     for (Map.Entry<String, String> entry : entries) {
                         writer.write("@prefix " + entry.getValue() + ": <http://semangit.de/ontology/" + entry.getKey() + "#>.");
@@ -2293,6 +2440,7 @@ public class Converter implements Runnable {
                         BufferedWriter writer = new BufferedWriter(new FileWriter(outPath), 32768);
                         final Set<Map.Entry<String, String>> entries = prefixTable.entrySet();
                         writer.write("@prefix semangit: <http://semangit.de/ontology/>.");
+                        printVoID(writer);
                         for (Map.Entry<String, String> entry : entries) {
                             writer.write("@prefix " + entry.getValue() + ": <http://semangit.de/ontology/" + entry.getKey() + "#>.");
                             writer.newLine();
