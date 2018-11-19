@@ -1,4 +1,4 @@
-# java_dev
+# Converter
 This repository is used to develop the Java converter of the SemanGit Project. The compiled .jar file as well as the main class can be found in the main repository as well.
 For the main project repository, please visit https://github.com/SemanGit/SemanGit
 
