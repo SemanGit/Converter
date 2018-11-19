@@ -6,8 +6,12 @@ import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Converter implements Runnable {
+
+    static AtomicInteger numTriples;
+
 
     private String workOnFile;
     private String path;
@@ -235,6 +239,19 @@ public class Converter implements Runnable {
         private TableSchema(){}
     }
 
+    private static String formatDateTime(String date)
+    {
+        try {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'hh-mm-ss");
+            return formatter.format( new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(date));
+        }
+        catch (Exception e)
+        {
+            System.out.println("Illegal format for date: " + date);
+        }
+        return date;
+    }
+
     private static HashMap<String, TableSchema> schemata = new HashMap<>();
 
     /**
@@ -419,10 +436,19 @@ public class Converter implements Runnable {
             return input;
         }
     }
-
     private static void printTriples(String currentTriple, ArrayList<BufferedWriter> writers)
     {
         try {
+
+            //experimental: count triples
+/*
+            int ctr = 0;
+            ctr += currentTriple.length() - currentTriple.replace(".\n", "\n").length(); //occurrences of terminating dots
+            ctr += currentTriple.length() - currentTriple.replace(",\n", "\n").length(); //occurrences of terminating commas
+            ctr += currentTriple.length() - currentTriple.replace(";\n", "\n").length(); //occurrences of terminating semicolons
+
+            numTriples.addAndGet(ctr);
+*/
             switch (sampling)
             {
                 case 0: writers.get(0).write(currentTriple);break; //no sampling
@@ -595,7 +621,7 @@ public class Converter implements Runnable {
                 if(!nextLine[4].equals("N")) {
                     currentTriple.append(getPrefix(TAG_Semangit + "commit_repository") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + nextLine[4]) ).append( ";\n");
                 }
-                currentTriple.append(getPrefix(TAG_Semangit + "commit_created_at") ).append( " \"" ).append( nextLine[5] ).append( "\".\n");
+                currentTriple.append(getPrefix(TAG_Semangit + "commit_created_at") ).append( " \"" ).append( formatDateTime(nextLine[5]) ).append( "\"^^xsd:dateTime.\n");
                 printTriples(currentTriple.toString(), writers);
                 currentTriple.setLength(0); //clear
             }
@@ -688,7 +714,7 @@ public class Converter implements Runnable {
                 //event id, issue id, actor id, action, action specific sha, created at
                 currentTriple.append("[ a " ).append( getPrefix(TAG_Semangit + "github_issue_event") ).append( ";");
                 currentTriple.append("\n");
-                currentTriple.append(getPrefix(TAG_Semangit + "github_issue_event_created_at") ).append( " \"" ).append( nextLine[5] ).append( "\";");
+                currentTriple.append(getPrefix(TAG_Semangit + "github_issue_event_created_at") ).append( " \"" ).append( formatDateTime(nextLine[5]) ).append( "\"^^xsd:dateTime;");
                 currentTriple.append("\n");
                 if(!nextLine[4].equals("N"))
                 {
@@ -845,7 +871,7 @@ public class Converter implements Runnable {
                     currentTriple.append(getPrefix(TAG_Semangit + "github_issue_pull_request") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Pullrequestprefix) + curLine[5]) ).append( ";");
                     currentTriple.append("\n");
                 }
-                currentTriple.append(getPrefix(TAG_Semangit + "github_issue_created_at") ).append( " \"" ).append( curLine[6] ).append( "\".");
+                currentTriple.append(getPrefix(TAG_Semangit + "github_issue_created_at") ).append( " \"" ).append( formatDateTime(curLine[6]) ).append( "\"^^xsd:dateTime.");
                 currentTriple.append("\n");
                 printTriples(currentTriple.toString(), writers);
                 currentTriple.setLength(0);
@@ -915,7 +941,7 @@ public class Converter implements Runnable {
 
                 currentTriple.append("[ a " ).append( getPrefix(TAG_Semangit + "github_organization_join_event") ).append( ";");
                 currentTriple.append("\n");
-                currentTriple.append(getPrefix(TAG_Semangit + "github_organization_joined_at") ).append( " \"" ).append( nextLine[2] ).append( "\" ] " ).append( getPrefix(TAG_Semangit + "github_organization_joined_by") ).append( " " ).append( b64(getPrefix(TAG_Semangit  + TAG_Userprefix) + nextLine[1]) ).append( ";");
+                currentTriple.append(getPrefix(TAG_Semangit + "github_organization_joined_at") ).append( " \"" ).append( formatDateTime(nextLine[2]) ).append( "\"^^xsd:dateTime ] " ).append( getPrefix(TAG_Semangit + "github_organization_joined_by") ).append( " " ).append( b64(getPrefix(TAG_Semangit  + TAG_Userprefix) + nextLine[1]) ).append( ";");
                 currentTriple.append("\n");
                 currentTriple.append(getPrefix(TAG_Semangit + "github_organization_is_joined") ).append( " " ).append( b64(getPrefix(TAG_Semangit  + TAG_Userprefix) + nextLine[0]) ).append( ".");
                 currentTriple.append("\n");
@@ -1043,7 +1069,7 @@ public class Converter implements Runnable {
 
                 currentTriple.append("[ a " ).append( getPrefix(TAG_Semangit + "github_project_join_event") ).append( ";");
                 currentTriple.append("\n");
-                currentTriple.append(getPrefix(TAG_Semangit + "github_project_join_event_created_at") ).append( " \"" ).append( nextLine[2] ).append( "\" ] ");
+                currentTriple.append(getPrefix(TAG_Semangit + "github_project_join_event_created_at") ).append( " \"" ).append( formatDateTime(nextLine[2]) ).append( "\"^^xsd:dateTime ] ");
                 currentTriple.append(getPrefix(TAG_Semangit + "github_project_joining_user") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Userprefix) + nextLine[1]) ).append( ";");
                 currentTriple.append("\n");
                 currentTriple.append(getPrefix(TAG_Semangit + "github_project_joined") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + nextLine[0]) ).append( ".");
@@ -1128,7 +1154,7 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                 }
                 //Not taking "last update" into account, as we can easily compute that on a graph database. TODO: reconsider?
-                currentTriple.append(getPrefix(TAG_Semangit + "repository_created_at") ).append( " \"" ).append( nextLine[6] ).append( "\".");
+                currentTriple.append(getPrefix(TAG_Semangit + "repository_created_at") ).append( " \"" ).append( formatDateTime(nextLine[6]) ).append( "\"^^xsd:dateTime.");
                 currentTriple.append("\n");
                 printTriples(currentTriple.toString(), writers);
                 currentTriple.setLength(0);
@@ -1248,7 +1274,7 @@ public class Converter implements Runnable {
                 currentTriple.append("[ a " ).append( getPrefix(TAG_Semangit + "github_pull_request_action") ).append( ";");
                 currentTriple.append("\n");
                 //id, PR id, created at, action, actor
-                currentTriple.append(getPrefix(TAG_Semangit + "github_pull_request_action_created_at") ).append( " \"" ).append( nextLine[2] ).append( "\";");
+                currentTriple.append(getPrefix(TAG_Semangit + "github_pull_request_action_created_at") ).append( " \"" ).append( formatDateTime(nextLine[2]) ).append( "\"^^xsd:dateTime;");
                 currentTriple.append("\n");
                 currentTriple.append(getPrefix(TAG_Semangit + "github_pull_request_action_id") ).append( " " ).append( nextLine[0] ).append( ";");
                 currentTriple.append("\n");
@@ -1494,7 +1520,7 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                 }
                 if(!nextLine[3].equals("N"))
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_created_at") ).append( " \"" ).append( nextLine[3] ).append( "\";");
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_created_at") ).append( " \"" ).append( formatDateTime(nextLine[3]) ).append( "\"^^xsd:dateTime;");
                 currentTriple.append("\n");
 
                 currentTriple.append(getPrefix(TAG_Semangit + "github_user_is_org") ).append( " ");
@@ -1616,7 +1642,7 @@ public class Converter implements Runnable {
 
                 currentTriple.append("[ a " ).append( getPrefix(TAG_Semangit + "github_follow_event") ).append( ";");
                 currentTriple.append("\n");
-                currentTriple.append(getPrefix(TAG_Semangit + "github_following_since") ).append( " \"" ).append( nextLine[2] ).append( "\";");
+                currentTriple.append(getPrefix(TAG_Semangit + "github_following_since") ).append( " \"" ).append( formatDateTime(nextLine[2]) ).append( "\"^^xsd:dateTime;");
                 currentTriple.append("\n");
                 currentTriple.append(getPrefix(TAG_Semangit + "github_user_or_project") ).append( " true ] " ).append( getPrefix(TAG_Semangit + "github_follower") ).append( " " ).append( b64(getPrefix(TAG_Semangit  + TAG_Userprefix) + nextLine[1]) ).append( ";");
                 currentTriple.append("\n");
@@ -1688,7 +1714,7 @@ public class Converter implements Runnable {
                 //bytes, timestamp, then close brackets and do remaining two links
                 currentTriple.append(getPrefix(TAG_Semangit + "github_project_language_bytes") ).append( " " ).append( nextLine[2] ).append( ";");
                 currentTriple.append("\n");
-                currentTriple.append(getPrefix(TAG_Semangit + "github_project_language_timestamp") ).append( " \"" ).append( nextLine[3] ).append( "\"] " ).append( getPrefix(TAG_Semangit + "github_project_language_repo") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + nextLine[0]) ).append( ";");
+                currentTriple.append(getPrefix(TAG_Semangit + "github_project_language_timestamp") ).append( " \"" ).append( formatDateTime(nextLine[3]) ).append( "\"^^xsd:dateTime ] " ).append( getPrefix(TAG_Semangit + "github_project_language_repo") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + nextLine[0]) ).append( ";");
                 currentTriple.append("\n");
                 currentTriple.append(getPrefix(TAG_Semangit + "github_project_language_is") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Langprefix) + currentLang) ).append( ".");
                 currentTriple.append("\n");
@@ -1799,7 +1825,7 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                 }
 
-                currentTriple.append(getPrefix(TAG_Semangit + "comment_created_at") ).append( " \"" ).append( nextLine[7] ).append( "\".");
+                currentTriple.append(getPrefix(TAG_Semangit + "comment_created_at") ).append( " \"" ).append( formatDateTime(nextLine[7]) ).append( "\"^^xsd:dateTime.");
                 currentTriple.append("\n");
                 printTriples(currentTriple.toString(), writers);
                 currentTriple.setLength(0);
@@ -1979,10 +2005,7 @@ public class Converter implements Runnable {
     }
 
 
-    /**
-     * Deprecated!
-     * This function used to be used for BFS / Connected graph sampling. We're not doing this in the parser anymore
-     */
+/*
     private static ArrayList<String> extractConnectedEntities(ArrayList<String> inputTriple)
     {
         ArrayList<String> output = new ArrayList<>();
@@ -2027,12 +2050,9 @@ public class Converter implements Runnable {
         }
         return output;
     }
+*/
 
-
-    /**
-     * Deprecated!
-     * This function used to be used for BFS / Connected graph sampling. We're not doing this in the parser anymore
-     */
+    /*
     private static String entityToIdentifier(String entity)
     {
         entity = entity.substring(entity.length() -2);
@@ -2049,12 +2069,9 @@ public class Converter implements Runnable {
         }
         return entity;
     }
+    */
 
-    /**
-     * Deprecated!
-     * This function used to be used for BFS / Connected graph sampling. We're not doing this in the parser anymore
-     */
-    private static void connectedSubgraph(String directory)
+/*    private static void connectedSubgraph(String directory)
     {
 
         //random file as entry point:
@@ -2091,7 +2108,7 @@ public class Converter implements Runnable {
             while ((currentLine = br.readLine()) != null) {
                 currentTriple.add(currentLine);
                 if (currentLine.endsWith(".")) {
-                    if(extractConnectedEntities(currentTriple).size() > 20) //TODO: try to avoid bad entry point
+                    if(extractConnectedEntities(currentTriple).size() > 20) //try to avoid bad entry point
                     {
                         break;
                     }
@@ -2105,12 +2122,12 @@ public class Converter implements Runnable {
                 //s = entityToIdentifier(s);
                 if(!toVisit.contains(s))
                 {
-                    toVisit.add(s); //TODO: may be slow! HashMap might be better solution
+                    toVisit.add(s); //may be slow! HashMap might be better solution
                 }
             }
 
 
-            //TODO: Add some "Found good entry point" check
+            //Add some "Found good entry point" check
             if(!toVisit.isEmpty()){
                 br.close();
             }
@@ -2127,7 +2144,7 @@ public class Converter implements Runnable {
 
             //iteration step
             int depth = 0;
-            while (!toVisit.isEmpty() && depth < 5) //TODO: replace with parameter
+            while (!toVisit.isEmpty() && depth < 5) //replace with parameter
             {
                 //count which file is most prominent
                 HashMap<String, ArrayList<String>> counters = new HashMap<>();
@@ -2251,7 +2268,7 @@ public class Converter implements Runnable {
             System.exit(1);
         }
     }
-
+*/
     //TODO: This does not belong inside the combined.ttl file, but into a separate void.ttl file. Then we can also add meta info such as number of triples etc.
     private static void printVoID(BufferedWriter w)
     {
@@ -2526,7 +2543,7 @@ public class Converter implements Runnable {
                     int in = Integer.parseInt(rightOfEql);
                     if(in == 64)
                     {
-                        System.out.println("Using Base64URL representation for integers.");
+                        System.out.println("Using Base64URL-like representation for integers.");
                         mode = 0;
                     }
                     else if(in == 32)
@@ -2546,7 +2563,7 @@ public class Converter implements Runnable {
                     }
                     else
                     {
-                        System.out.println("Unknown base passed as argument. Using Base64URL representation for integers.");
+                        System.out.println("Unknown base passed as argument. Using Base64URL-like representation for integers.");
                         mode = 0;
                     }
                 }
@@ -2561,13 +2578,13 @@ public class Converter implements Runnable {
                     samplingGiven = true;
                     switch (rightOfEql)
                     {
-                        case "head": sampling = 1;break;
-                        case "tail": sampling = 2;break;
+//                        case "head": sampling = 1;break;
+//                        case "tail": sampling = 2;break;
                         case "random": sampling = 3;break;
-                        case "connected": sampling = 4;mergeOutput=false;noUserTexts=true;break;
-                        case "bfs": sampling = 5;mergeOutput=false;noUserTexts=true;break;
+//                        case "connected": sampling = 4;mergeOutput=false;noUserTexts=true;break;
+//                        case "bfs": sampling = 5;mergeOutput=false;noUserTexts=true;break;
                         default: sampling = 0; samplingGiven = false;
-                            System.out.println("Invalid sampling method. Available methods are head, tail and random. Using no sampling.");
+                            System.out.println("Invalid sampling method. Only available sampling method is random sampling. Using no sampling.");
                     }
                     if(sampling != 0 && sampling != 3)
                     {
@@ -2608,7 +2625,7 @@ public class Converter implements Runnable {
                     if(!s.equals(args[0]))
                     {
                         System.out.println("Unknown parameter: " + s);
-                        System.out.println("Usage: java -cp com.semangit_main.jar Mainass <path/to/input/directory> [-base=64|32|16|10] [-noprefix] [-sampling=random|connected|bfs] [-percentage=X] [-nomerging]");
+                        System.out.println("Usage: java -cp com.semangit_main.jar Mainass <path/to/input/directory> [-base=64|32|16|10] [-noprefix] [-sampling=random] [-percentage=X] [-nomerging] [-nostrings]");
                         System.out.println("Note that percentage parameter is obligatory, if sampling method is set to random. Otherwise it will be ignored.");
                     }
                 }
@@ -2637,6 +2654,7 @@ public class Converter implements Runnable {
             }
         }
         try {
+            numTriples = new AtomicInteger(0);
             File index = new File(args[0] + "rdf");
             if (!index.exists() && !index.mkdirs()) {
                 System.out.println("Unable to create " + args[0] + "rdf/ directory. Exiting.");
@@ -2749,10 +2767,6 @@ public class Converter implements Runnable {
                     }
                 }
             }
-            else if(sampling == 4) //not merging output. Probably subgraph sampling
-            {
-                connectedSubgraph(args[0]);
-            }
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -2794,6 +2808,7 @@ public class Converter implements Runnable {
                 System.out.println("URI: " + entry.getKey() + " -- Used Prefix: " + prefixTable.get(entry.getKey()) + " -- Counter: " + entry.getValue());
             }
         }
+        //System.out.println("Num triples: " + numTriples.get());
         System.exit(0);
 
     }
