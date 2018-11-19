@@ -9,9 +9,15 @@ You can run the converter on an extracted dataset from GHTorrent as follows:
 java -jar converter_main.jar path/to/extracted/files \[options\]
 
 Options include:
+
 -base=10|16|32|64 - changes the integer string representation. Default is 64. This uses the Base64URL approach, except for the minus sign missing. This causes issues if it occurs as leading character.
+
 -noprefix - an experimental parameter used for statistical purposes. This enforces base=10 though and does not use turtles prefixing capabilities.
+
 -sampling=random - allows for random sampling. Triples are randomly accepted or rejected based on percentage parameter. If this parameter is not given, no sampling is done.
+
 -percentage=X - for X in (0, 1\], this determines with what probability a triple is accepted during random sampling.
+
 -nomerging - does not create a combined.ttl file, but instead keeps one file per input csv file.
+
 -nostrings - does not include user comments in output. This can be used to create a cleaner output that is easier to parse by another application.
