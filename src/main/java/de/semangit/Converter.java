@@ -216,7 +216,30 @@ public class Converter implements Runnable {
 
     }
 
+
     private static Map<String, Long> prefixCtr = new HashMap<>();
+
+    private static void postIncrementCounter(String s) { //in case of abbreviation, call this function to
+        if (prefixing) {
+            if (prefixTable.get(s) == null) {
+                System.out.println("Prefix for " + s + " missing.");
+            }
+            if(debug) {
+                long ctr = 0;
+                try {
+                    if (prefixCtr.containsKey(s)) {
+                        ctr = prefixCtr.get(s);
+                    }
+                } catch (NullPointerException e) {
+
+                    //System.out.println("For some random reason, no prefix counter for " + s + " could be retrieved.");
+                    //e.printStackTrace();
+                }
+
+                prefixCtr.put(s, ++ctr);
+            }
+        }
+    }
 
     private static String getPrefix(String s)
     {
@@ -224,19 +247,20 @@ public class Converter implements Runnable {
             if (prefixTable.get(s) == null) {
                 System.out.println("Prefix for " + s + " missing.");
             }
-            long ctr = 0;
-            try {
-                if (prefixCtr.containsKey(s)) {
-                    ctr = prefixCtr.get(s);
-                }
-            }
-            catch (NullPointerException e)
-            {
+            if(debug) {
+                long ctr = 0;
+                try {
+                    if (prefixCtr.containsKey(s)) {
+                        ctr = prefixCtr.get(s);
+                    }
+                } catch (NullPointerException e) {
 
-                //System.out.println("For some random reason, no prefix counter for " + s + " could be retrieved.");
-                //e.printStackTrace();
+                    //System.out.println("For some random reason, no prefix counter for " + s + " could be retrieved.");
+                    //e.printStackTrace();
+                }
+
+                prefixCtr.put(s, ++ctr);
             }
-            prefixCtr.put(s, ++ctr);
             return prefixTable.get(s) + ":";
         }
         else {
@@ -710,6 +734,8 @@ public class Converter implements Runnable {
                 if (!abbreviated) {
                     currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + curLine[0]) ).append( " " ).append( getPrefix(TAG_Semangit + "commit_has_parent") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + curLine[1]));
                 } else {
+                    postIncrementCounter(TAG_Semangit + TAG_Commitprefix);
+                    postIncrementCounter(TAG_Semangit + "commit_has_parent");
                     currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + curLine[1])); //only specifying next object. subject/predicate are abbreviated
                 }
                 if (curLine[0].equals(nextLine[0])) {
@@ -728,6 +754,8 @@ public class Converter implements Runnable {
                 if (!abbreviated) {
                     currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + curLine[0]) ).append( " " ).append( getPrefix(TAG_Semangit + "commit_has_parent") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + curLine[1]) ).append( ".");
                 } else {
+                    postIncrementCounter(TAG_Semangit + TAG_Commitprefix);
+                    postIncrementCounter(TAG_Semangit + "commit_has_parent");
                     currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + curLine[1]) ).append( "."); //only specifying next object. subject/predicate are abbreviated
                 }
                 currentTriple.append("\n");
@@ -966,6 +994,8 @@ public class Converter implements Runnable {
 
                 if(abbreviated)
                 {
+                    postIncrementCounter(TAG_Semangit + TAG_Repolabelprefix);
+                    postIncrementCounter(TAG_Semangit + "github_issue_label_used_by");
                     currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Issueprefix) + curLine[1])); //only print object
                 }
                 else
@@ -991,6 +1021,8 @@ public class Converter implements Runnable {
             }
             if(abbreviated)
             {
+                postIncrementCounter(TAG_Semangit + TAG_Repolabelprefix);
+                postIncrementCounter(TAG_Semangit + "github_issue_label_used_by");
                 currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Issueprefix) + curLine[1])); //only print object
             }
             else
@@ -1200,6 +1232,8 @@ public class Converter implements Runnable {
 
                 if(abbreviated) //abbreviated in previous step. Only need to print object now
                 {
+                    postIncrementCounter(TAG_Semangit + TAG_Commitprefix);
+                    postIncrementCounter(TAG_Semangit + "repository_has_commit");
                     sb.append(b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + curLine[1])); //one commit for multiple repositories (branching / merging)
                 }
                 else //no abbreviation occurred. Full subject predicate object triple printed
@@ -1223,6 +1257,8 @@ public class Converter implements Runnable {
             //handle last line
             if(abbreviated) //abbreviated in previous step. Only need to print object now
             {
+                postIncrementCounter(TAG_Semangit + TAG_Commitprefix);
+                postIncrementCounter(TAG_Semangit + "repository_has_commit");
                 sb.append(b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + curLine[1]) ); //one commit for multiple repositories (branching / merging)
             }
             else //no abbreviation occurred. Full subject predicate object triple printed
@@ -1425,6 +1461,8 @@ public class Converter implements Runnable {
 
                 if(abbreviated)
                 {
+                    postIncrementCounter(TAG_Semangit + TAG_Commitprefix);
+                    postIncrementCounter(TAG_Semangit + "pull_request_has_commit");
                     currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + curLine[1]));
                 }
                 else
@@ -1450,6 +1488,8 @@ public class Converter implements Runnable {
             //handle last line of file
             if(abbreviated)
             {
+                postIncrementCounter(TAG_Semangit + TAG_Commitprefix);
+                postIncrementCounter(TAG_Semangit + "pull_request_has_commit");
                 currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + curLine[1]) ).append( ".");
             }
             else
