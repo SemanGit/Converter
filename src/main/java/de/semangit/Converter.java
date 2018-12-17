@@ -1,5 +1,6 @@
 package de.semangit;
 
+//import com.datastax.driver.core.*;
 import com.datastax.driver.core.*;
 import com.opencsv.CSVReader;
 
@@ -37,7 +38,7 @@ public class Converter implements Runnable {
 
     //private static final String PREFIX_Semangit = "<http://www.semangit.de/ontology/>";
     private static final String TAG_Semangit = "semangit:"; //TODO: Speed option: Instead of concatenating "semangit:" to all IDs at runtime, do this once at the beginning for all identifiers.
-    private static final String TAG_Userprefix = "ghuser_";
+    private static final String TAG_Userprefix = "ghuser_"; //TODO: Not conforming the ontology. Need to rename those strings here
     private static final String TAG_Repoprefix = "ghrepo_";
     private static final String TAG_Commitprefix = "ghcom_";
     private static final String TAG_Commentprefix = "ghcomment_";
@@ -476,6 +477,8 @@ public class Converter implements Runnable {
             return input;
         }
     }
+
+    private static Statement trash;
 
     private static HashMap<Long, BatchStatement> batches = new HashMap<>();
     private static PreparedStatement defaultInsert = null;
@@ -3060,7 +3063,7 @@ public class Converter implements Runnable {
             }
         }
         try {
-            numTriples = new AtomicInteger(0);
+            numTriples = new AtomicInteger(0); //TODO: Make into AtomicLong
             File index = new File(args[0] + "rdf");
             if (!index.exists() && !index.mkdirs()) {
                 System.out.println("Unable to create " + args[0] + "rdf/ directory. Exiting.");
