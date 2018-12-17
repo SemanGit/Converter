@@ -630,7 +630,7 @@ public class Converter implements Runnable {
 
                     }
                     else {
-                        //writers.get(0).write(currentTriple); //TODO: Disabled for faster statistics
+                        writers.get(0).write(currentTriple);
                     }
                     break;
                 //cases 1 and 2 (head/tail sampling) removed. doing those via bash instead for better performance
