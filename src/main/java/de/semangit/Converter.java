@@ -92,7 +92,6 @@ public class Converter implements Runnable {
         //Issue events
         prefixTable.put(TAG_Semangit + "github_issue_event", "o");
         prefixTable.put(TAG_Semangit + "github_issue_event_created_at", "p");
-        prefixTable.put(TAG_Semangit + "github_issue_event_action_specific_sha", "cd");
         prefixTable.put(TAG_Semangit + "github_issue_event_action", "r");
         prefixTable.put(TAG_Semangit + "github_issue_event_actor", "s");
         prefixTable.put(TAG_Semangit + "github_issue_event_for", "t");
@@ -175,7 +174,7 @@ public class Converter implements Runnable {
         //Watchers == Followers
 
         //Comments
-        prefixTable.put(TAG_Semangit + "comment", "aD");
+        prefixTable.put(TAG_Semangit + "comment", "XY"); //giving it a completely new name, as there was a duplicate error before
         prefixTable.put(TAG_Semangit + TAG_Commentprefix + "commit_", "aw");
         prefixTable.put(TAG_Semangit + "comment_for", "ax");
         prefixTable.put(TAG_Semangit + "comment_author", "ay");
@@ -207,6 +206,7 @@ public class Converter implements Runnable {
 
         prefixTable.put(TAG_Semangit + "commit_repository", "q");
 
+        prefixTable.put(TAG_Semangit + "github_issue_event_action_specific_sha", "cd");
         prefixTable.put(TAG_Semangit + TAG_Followprefix, "ce");
         prefixTable.put(TAG_Semangit + TAG_Issue_Eventprefix, "cf");
         prefixTable.put(TAG_Semangit + TAG_Orga_Join_Eventprefix, "cg");
@@ -2299,7 +2299,8 @@ public class Converter implements Runnable {
                     if (!nextLine[0].equals("")) {
                         currentTriple.append("[").append(getPrefix(TAG_Semangit + "comment_for")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Pullrequestprefix) + nextLine[0])); //comment for a pull request
                         if (!nextLine[5].equals("") && !nextLine[5].equals("N")) {
-                            currentTriple.append(",\n").append(getPrefix(TAG_Semangit + "comment_for")).append(" ");
+                            currentTriple.append(",\n");
+                            //.append(getPrefix(TAG_Semangit + "comment_for")).append(" ");
                         }
                         else {
                             currentTriple.append(";\n");
@@ -2811,7 +2812,7 @@ public class Converter implements Runnable {
                 try {
                     BufferedWriter writer = new BufferedWriter(new FileWriter(outPath), 32768);
                     final Set<Map.Entry<String, String>> entries = prefixTable.entrySet();
-                    printVoID(writer);
+                    printVoID(new BufferedWriter(new FileWriter(directory.concat("dataset.void")), 32768));
                     writer.write("@prefix semangit: <http://semangit.de/ontology/>.");
                     for (Map.Entry<String, String> entry : entries) {
                         writer.write("@prefix " + entry.getValue() + ": <http://semangit.de/ontology/" + entry.getKey() + "#>.");
