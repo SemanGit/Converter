@@ -873,7 +873,7 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_following_since") ).append( " \"" ).append( nextLine[2] ).append( "\";");
                     currentTriple.append("\n");
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_or_project") ).append( " false;\n " ).append( getPrefix(TAG_Semangit + "github_follower") ).append( " " ).append( b64(getPrefix(TAG_Semangit  + TAG_Userprefix) + nextLine[1]) ).append( ";");
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_or_project") ).append( " false ;\n " ).append( getPrefix(TAG_Semangit + "github_follower") ).append( " " ).append( b64(getPrefix(TAG_Semangit  + TAG_Userprefix) + nextLine[1]) ).append( ";");
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_follows") ).append( " " ).append( b64(getPrefix(TAG_Semangit  + TAG_Userprefix) + nextLine[0]) ).append( ".");
                     currentTriple.append("\n");
@@ -1410,10 +1410,10 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                 }
                 if (nextLine[8].equals("1")) {
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_project_deleted") ).append( " true;");
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_project_deleted") ).append( " true ;");
                     currentTriple.append("\n");
                 } else {
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_project_deleted") ).append( " false;");
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_project_deleted") ).append( " false ;");
                     currentTriple.append("\n");
                 }
                 //Not taking "last update" into account, as we can easily compute that on a graph database. TODO: reconsider?
@@ -1645,10 +1645,10 @@ public class Converter implements Runnable {
                 currentTriple.append(getPrefix(TAG_Semangit + "github_pull_request_intra_branch") ).append( " ");
                 if(nextLine[6].equals("0"))
                 {
-                    currentTriple.append("false");
+                    currentTriple.append("false ");
                 }
                 else{
-                    currentTriple.append("true");
+                    currentTriple.append("true ");
                 }
                 currentTriple.append(".");
                 currentTriple.append("\n");
@@ -1817,24 +1817,24 @@ public class Converter implements Runnable {
                 currentTriple.append(getPrefix(TAG_Semangit + "github_user_is_org") ).append( " ");
                 if(nextLine[4].equals("USR"))
                 {
-                    currentTriple.append("false;");
+                    currentTriple.append("false ;");
                     currentTriple.append("\n");
                 }
                 else
                 {
-                    currentTriple.append("true;");
+                    currentTriple.append("true ;");
                     currentTriple.append("\n");
                 }
 
                 currentTriple.append(getPrefix(TAG_Semangit + "github_user_deleted") ).append( " ");
                 if(nextLine[5].equals("0"))
                 {
-                    currentTriple.append("false;");
+                    currentTriple.append("false ;");
                     currentTriple.append("\n");
                 }
                 else
                 {
-                    currentTriple.append("true;");
+                    currentTriple.append("true ;");
                     currentTriple.append("\n");
                 }
 
@@ -1876,12 +1876,12 @@ public class Converter implements Runnable {
                 currentTriple.append(getPrefix(TAG_Semangit + "github_user_fake") ).append( " ");
                 if(nextLine[6].equals("0"))
                 {
-                    currentTriple.append("false.");
+                    currentTriple.append("false .");
                     currentTriple.append("\n");
                 }
                 else
                 {
-                    currentTriple.append("true.");
+                    currentTriple.append("true .");
                     currentTriple.append("\n");
                 }
                 printTriples(currentTriple.toString(), writers);
@@ -1951,7 +1951,7 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_following_since")).append(" \"").append(formatDateTime(nextLine[2])).append("\"^^xsd:dateTime;");
                     currentTriple.append("\n");
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_or_project")).append(" true;\n").append(getPrefix(TAG_Semangit + "github_follower")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Userprefix) + nextLine[1])).append(";");
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_or_project")).append(" true ;\n").append(getPrefix(TAG_Semangit + "github_follower")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Userprefix) + nextLine[1])).append(";");
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_follows")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + nextLine[0])).append(".");
                     currentTriple.append("\n");
