@@ -8,6 +8,7 @@ import com.datastax.driver.core.*;
 import com.opencsv.CSVReader;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -15,8 +16,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Converter implements Runnable {
 
+    private static Date compileDate;
+
     private static AtomicInteger numTriples;
-    
+
 
     private static boolean useBlankNodes = true;
     private String workOnFile;
@@ -2875,9 +2878,26 @@ public class Converter implements Runnable {
 
     private Converter(String workOnFile, String path)
     {
+        if(workOnFile == null)
+        {
+            try
+            {
+                Converter.compileDate = new Date(new File(getClass().getClassLoader().getResource(getClass().getCanonicalName().replace('.', '/') + ".class").toURI()).lastModified());
+                if(debug)
+                {
+                    System.out.println("Running converter compiled at " + Converter.compileDate.toString());
+                }
+            }
+            catch (URISyntaxException e)
+            {
+                e.printStackTrace();
+                System.exit(1);
+            }
+        }
         this.workOnFile = workOnFile;
         this.path = path;
     }
+
 
     public void run()
     {
@@ -3066,6 +3086,10 @@ public class Converter implements Runnable {
                 System.out.println("No Prefixing option is only available for base10. Setting base to 10.");
                 mode = 3;
             }
+        }
+        if(debug) {
+            //some versioning output produced by the following fake class generation. A bit hacky, but does the trick.
+            new Converter(null, null);
         }
         try {
             numTriples = new AtomicInteger(0); //TODO: Make into AtomicLong
