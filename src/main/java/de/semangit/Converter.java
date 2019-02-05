@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Converter implements Runnable {
 
     private static AtomicInteger numTriples;
+    
 
     private static boolean useBlankNodes = true;
     private String workOnFile;
@@ -286,7 +287,7 @@ public class Converter implements Runnable {
     private static String formatDateTime(String date)
     {
         try {
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'hh-mm-ss");
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
             return formatter.format( new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(date));
         }
         catch (Exception e)
