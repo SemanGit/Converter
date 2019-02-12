@@ -3165,28 +3165,33 @@ public class Converter implements Runnable {
 
             String correctPath = args[0].concat("rdf/");
             if (mergeOutput) {
-                appendFileToOutput(correctPath, "project_commits.ttl");
-                appendFileToOutput(correctPath, "commit_comments.ttl");
-                appendFileToOutput(correctPath, "commits.ttl");
-                appendFileToOutput(correctPath, "commit_parents.ttl");
-                appendFileToOutput(correctPath, "issue_comments.ttl");
-                appendFileToOutput(correctPath, "pull_request_comments.ttl");
-                appendFileToOutput(correctPath, "issue_events.ttl");
-                appendFileToOutput(correctPath, "issues.ttl");
-                appendFileToOutput(correctPath, "project_members.ttl");
-                appendFileToOutput(correctPath, "project_languages.ttl");
-                appendFileToOutput(correctPath, "projects.ttl");
-                appendFileToOutput(correctPath, "pull_request_history.ttl");
-                appendFileToOutput(correctPath, "pull_request_commits.ttl");
-                appendFileToOutput(correctPath, "pull_requests.ttl");
-                appendFileToOutput(correctPath, "repo_labels.ttl");
-                appendFileToOutput(correctPath, "repo_milestones.ttl");
-                appendFileToOutput(correctPath, "issue_labels.ttl");
-                appendFileToOutput(correctPath, "watchers.ttl");
-                appendFileToOutput(correctPath, "organization_members.ttl");
-                appendFileToOutput(correctPath, "followers.ttl");
-                appendFileToOutput(correctPath, "users.ttl");
+                if(!noCommits)
+                {
+                    appendFileToOutput(correctPath, "project_commits.ttl");
+                    appendFileToOutput(correctPath, "commits.ttl");
+                    appendFileToOutput(correctPath, "commit_parents.ttl");
 
+                }
+                if(!onlyCommits) {
+                    appendFileToOutput(correctPath, "commit_comments.ttl");
+                    appendFileToOutput(correctPath, "issue_comments.ttl");
+                    appendFileToOutput(correctPath, "pull_request_comments.ttl");
+                    appendFileToOutput(correctPath, "issue_events.ttl");
+                    appendFileToOutput(correctPath, "issues.ttl");
+                    appendFileToOutput(correctPath, "project_members.ttl");
+                    appendFileToOutput(correctPath, "project_languages.ttl");
+                    appendFileToOutput(correctPath, "projects.ttl");
+                    appendFileToOutput(correctPath, "pull_request_history.ttl");
+                    appendFileToOutput(correctPath, "pull_request_commits.ttl");
+                    appendFileToOutput(correctPath, "pull_requests.ttl");
+                    appendFileToOutput(correctPath, "repo_labels.ttl");
+                    appendFileToOutput(correctPath, "repo_milestones.ttl");
+                    appendFileToOutput(correctPath, "issue_labels.ttl");
+                    appendFileToOutput(correctPath, "watchers.ttl");
+                    appendFileToOutput(correctPath, "organization_members.ttl");
+                    appendFileToOutput(correctPath, "followers.ttl");
+                    appendFileToOutput(correctPath, "users.ttl");
+                }
                 if (samplingPercentages.size() > 1) {
                     for (float f : samplingPercentages) {
                         File index2 = new File(args[0] + "/rdf/" + f);
