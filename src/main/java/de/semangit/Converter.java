@@ -20,6 +20,8 @@ public class Converter implements Runnable {
 
     private static AtomicInteger numTriples;
 
+    private static boolean noCommits = false;
+    private static boolean onlyCommits = false;
 
     private static boolean useBlankNodes = true;
     private String workOnFile;
@@ -3029,7 +3031,7 @@ public class Converter implements Runnable {
                 {
                     mergeOutput = false;
                 }
-                else if(s.contains("-nostrings"))
+                else if(s.contains("-nostring"))
                 {
                     noUserTexts = true;
                 }
@@ -3038,7 +3040,17 @@ public class Converter implements Runnable {
                     useBlankNodes = false;
                     //TODO to be documented
                 }
-                else if(s.contains("-cassandra"))
+                else if(s.contains("-nocommit"))
+                {
+                    noCommits = true;
+                    System.out.println("Leaving out all commits!");
+                }
+                else if(s.contains("-onlycommit"))
+                {
+                    onlyCommits = true;
+                    System.out.println("Only handling commit related data!");
+                }
+                /*                else if(s.contains("-cassandra"))
                 {
                     try
                     {
@@ -3053,8 +3065,9 @@ public class Converter implements Runnable {
                         e.printStackTrace();
                         System.exit(1);
                     }
+
                 }
-                else
+*/                else
                 {
                     if(!s.equals(args[0].toLowerCase()))
                     {
@@ -3107,27 +3120,32 @@ public class Converter implements Runnable {
             System.out.println();
 
             ArrayList<Thread> processes = new ArrayList<>();
-            processes.add(new Thread(new Converter("project_commits", args[0])));
-            processes.add(new Thread(new Converter("commit_comments", args[0])));
-            processes.add(new Thread(new Converter("commit_parents", args[0])));
-            processes.add(new Thread(new Converter("commits", args[0])));
-            processes.add(new Thread(new Converter("followers", args[0])));
-            processes.add(new Thread(new Converter("issue_comments", args[0])));
-            processes.add(new Thread(new Converter("issue_events", args[0])));
-            processes.add(new Thread(new Converter("issue_labels", args[0])));
-            processes.add(new Thread(new Converter("issues", args[0])));
-            processes.add(new Thread(new Converter("organization_members", args[0])));
-            processes.add(new Thread(new Converter("project_members", args[0])));
-            processes.add(new Thread(new Converter("project_languages", args[0])));
-            processes.add(new Thread(new Converter("projects", args[0])));
-            processes.add(new Thread(new Converter("pull_request_comments", args[0])));
-            processes.add(new Thread(new Converter("pull_request_commits", args[0])));
-            processes.add(new Thread(new Converter("pull_request_history", args[0])));
-            processes.add(new Thread(new Converter("pull_requests", args[0])));
-            processes.add(new Thread(new Converter("users", args[0])));
-            processes.add(new Thread(new Converter("repo_labels", args[0])));
-            processes.add(new Thread(new Converter("repo_milestones", args[0])));
-            processes.add(new Thread(new Converter("watchers", args[0])));
+            if(!noCommits)
+            {
+                processes.add(new Thread(new Converter("project_commits", args[0])));
+                processes.add(new Thread(new Converter("commits", args[0])));
+                processes.add(new Thread(new Converter("commit_parents", args[0])));
+            }
+            if(!onlyCommits) {
+                processes.add(new Thread(new Converter("commit_comments", args[0])));
+                processes.add(new Thread(new Converter("followers", args[0])));
+                processes.add(new Thread(new Converter("issue_comments", args[0])));
+                processes.add(new Thread(new Converter("issue_events", args[0])));
+                processes.add(new Thread(new Converter("issue_labels", args[0])));
+                processes.add(new Thread(new Converter("issues", args[0])));
+                processes.add(new Thread(new Converter("organization_members", args[0])));
+                processes.add(new Thread(new Converter("project_members", args[0])));
+                processes.add(new Thread(new Converter("project_languages", args[0])));
+                processes.add(new Thread(new Converter("projects", args[0])));
+                processes.add(new Thread(new Converter("pull_request_comments", args[0])));
+                processes.add(new Thread(new Converter("pull_request_commits", args[0])));
+                processes.add(new Thread(new Converter("pull_request_history", args[0])));
+                processes.add(new Thread(new Converter("pull_requests", args[0])));
+                processes.add(new Thread(new Converter("users", args[0])));
+                processes.add(new Thread(new Converter("repo_labels", args[0])));
+                processes.add(new Thread(new Converter("repo_milestones", args[0])));
+                processes.add(new Thread(new Converter("watchers", args[0])));
+            }
             for (Thread t : processes) {
                 try {
                     t.start();
