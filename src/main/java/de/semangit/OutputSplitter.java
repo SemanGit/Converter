@@ -28,11 +28,12 @@ class OutputSplitter {
                 System.out.println("Unable to create splitted directory " + rootPath + " . Exiting.");
                 System.exit(1);
             }
-            this.maxSize = maxSize;
+            this.maxSize = maxSize * 1024 * 1024;
             fileCtr = 0;
             lineCtr = 0;
             try {
                 w = new BufferedWriter(new FileWriter(rootPath + fileCtr + ".ttl"));
+                PrintPrefixes();
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);
@@ -66,12 +67,7 @@ class OutputSplitter {
                 w.close();
                 fileCtr++;
                 w = new BufferedWriter(new FileWriter(rootPath + fileCtr + ".ttl"));
-                final Set<Map.Entry<String, String>> entries = Converter.prefixTable.entrySet();
-                w.write("@prefix semangit: <http://semangit.de/ontology/>.");
-                for (Map.Entry<String, String> entry : entries) {
-                    w.write("@prefix " + entry.getValue() + ": <http://semangit.de/ontology/" + entry.getKey() + "#>.");
-                    w.newLine();
-                }
+                PrintPrefixes();
             }
         }
         catch (Exception e)
@@ -79,5 +75,33 @@ class OutputSplitter {
             e.printStackTrace();
             System.exit(1);
         }
+    }
+
+    void CloseWriter()
+    {
+        try {
+            w.close();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    private void PrintPrefixes()
+    {
+        try {
+            final Set<Map.Entry<String, String>> entries = Converter.prefixTable.entrySet();
+            w.write("@prefix semangit: <http://semangit.de/ontology/>.");
+            for (Map.Entry<String, String> entry : entries) {
+                w.write("@prefix " + entry.getValue() + ": <http://semangit.de/ontology/" + entry.getKey() + "#>.");
+                w.newLine();
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
     }
 }

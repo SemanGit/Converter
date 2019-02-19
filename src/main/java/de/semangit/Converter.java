@@ -604,6 +604,8 @@ public class Converter implements Runnable {
             for(BufferedWriter w : writers) {
                 w.close();
             }
+            outputSplitter.CloseWriter();
+            
         }
         catch(Exception e)
         {
@@ -659,6 +661,7 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
         }
         catch (Exception e)
         {
@@ -741,6 +744,7 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
         }
         catch (Exception e)
         {
@@ -829,6 +833,7 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
         }
         catch (Exception e)
         {
@@ -924,6 +929,7 @@ public class Converter implements Runnable {
             for(BufferedWriter w : writers) {
                 w.close();
             }
+            outputSplitter.CloseWriter();
         }
         catch (Exception e)
         {
@@ -1035,6 +1041,8 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
+
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
@@ -1108,6 +1116,8 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
+
         }
         catch (Exception e)
         {
@@ -1203,6 +1213,8 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
+
         }
         catch (Exception e)
         {
@@ -1282,6 +1294,8 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
+
         }
         catch (Exception e)
         {
@@ -1372,6 +1386,8 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
+
         }
         catch (Exception e)
         {
@@ -1467,6 +1483,8 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
+
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
@@ -1561,6 +1579,8 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
+
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
@@ -1641,6 +1661,8 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
+
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
@@ -1697,6 +1719,8 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
+
         }
         catch (Exception e)
         {
@@ -1890,6 +1914,8 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
+
         }
         catch (ArrayIndexOutOfBoundsException e)
         {
@@ -1975,6 +2001,8 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
+
         }
         catch (Exception e)
         {
@@ -2077,6 +2105,8 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
+
         }
         catch (FileNotFoundException e)
         {
@@ -2194,6 +2224,8 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
+
         }
         catch (Exception e)
         {
@@ -2281,6 +2313,8 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
+
         }
         catch (Exception e)
         {
@@ -2446,6 +2480,8 @@ public class Converter implements Runnable {
             {
                 w.close();
             }
+            outputSplitter.CloseWriter();
+
         }
         catch (Exception e)
         {
@@ -2940,7 +2976,7 @@ public class Converter implements Runnable {
         {
             try
             {
-                Converter.compileDate = new Date(new File(getClass().getClassLoader().getResource(getClass().getCanonicalName().replace('.', '/') + ".class").toURI()).lastModified());
+                Converter.compileDate = new Date(new File(getClass().getResource("Converter.class").toURI()).lastModified());
                 if(debug)
                 {
                     System.out.println("Running converter compiled at " + Converter.compileDate.toString());
@@ -2948,8 +2984,9 @@ public class Converter implements Runnable {
             }
             catch (URISyntaxException e)
             {
+                System.out.println("(Not crucial) Failed to obtain compilation date.");
                 e.printStackTrace();
-                System.exit(1);
+                System.out.println("Continuing without compilation date as version");
             }
         }
         this.workOnFile = workOnFile;
@@ -3110,7 +3147,7 @@ public class Converter implements Runnable {
                 {
                     String rightOfEql = s.substring(s.lastIndexOf("=") + 1);
                     fileSizeBeforeSplit = Integer.parseInt(rightOfEql);
-                    System.out.println("Splitting output files after " + fileSizeBeforeSplit + "bytes.");
+                    System.out.println("Splitting output files after " + fileSizeBeforeSplit + "MiB.");
                     System.out.println("Warning: This enforces not to create a combined output file!");
                     mergeOutput = false;
                 }
