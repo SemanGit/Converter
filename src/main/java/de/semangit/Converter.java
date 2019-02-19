@@ -2976,9 +2976,17 @@ public class Converter implements Runnable {
         {
             try
             {
-                System.out.println("Getting compilation date...");
-                Converter.compileDate = new Date(new File(getClass().getResource("Converter.class").toURI()).lastModified());
-                System.out.println("Running converter compiled at " + Converter.compileDate.toString());
+                //causes error when not run inside IDE
+//                System.out.println("Getting compilation date...");
+//                InputStream in = Converter.class.getResource("Converter.class").
+//                Converter.compileDate = new Date(new File(getClass().getResource("Converter.class").toURI()).lastModified());
+//                System.out.println("Running converter compiled at " + Converter.compileDate.toString());
+
+                File jarFile = new File
+                        (this.getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
+                System.out.println("Version: Compiled at " + new Date(jarFile.lastModified()));
+
+
             }
             catch (Exception e)
             {
