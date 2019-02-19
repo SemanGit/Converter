@@ -2976,11 +2976,9 @@ public class Converter implements Runnable {
         {
             try
             {
+                System.out.println("Getting compilation date...");
                 Converter.compileDate = new Date(new File(getClass().getResource("Converter.class").toURI()).lastModified());
-                if(debug)
-                {
-                    System.out.println("Running converter compiled at " + Converter.compileDate.toString());
-                }
+                System.out.println("Running converter compiled at " + Converter.compileDate.toString());
             }
             catch (Exception e)
             {
