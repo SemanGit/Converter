@@ -1,10 +1,5 @@
 package de.semangit;
-
-//TODO: Add some versioning output to the jar file, e.g. build date from manifest, see https://stackoverflow.com/questions/3336392/java-print-time-of-last-compilation
-
-
 //import com.datastax.driver.core.*;
-import com.datastax.driver.core.*;
 import com.opencsv.CSVReader;
 
 import java.io.*;
@@ -20,6 +15,8 @@ public class Converter implements Runnable {
 
     private static AtomicInteger numTriples;
 
+    static int fileSizeBeforeSplit = 0;
+
     private static boolean noCommits = false;
     private static boolean onlyCommits = false;
 
@@ -34,19 +31,19 @@ public class Converter implements Runnable {
     //a parameter to better examine the output of the program. Does not create a combined.ttl file, but keeps all output in the original .tll files
     private static boolean mergeOutput = true;
 
-    private static Map<String, BufferedWriter> graphWriters = new HashMap<>();
+    //private static Map<String, BufferedWriter> graphWriters = new HashMap<>();
     private static String rdfPath;
 
     private static Random rnd = new Random();
 
 
     //private static boolean useCassandra = false;
-    private static Cluster cluster = null;
-    private static Session session = null;
+    //private static Cluster cluster = null;
+    //private static Session session = null;
 
 
     //private static final String PREFIX_Semangit = "<http://www.semangit.de/ontology/>";
-    private static final String TAG_Semangit = "semangit:"; //TODO: Speed option: Instead of concatenating "semangit:" to all IDs at runtime, do this once at the beginning for all identifiers.
+    private static final String TAG_Semangit = "semangit:";
     private static final String TAG_Userprefix = "ghuser_"; //TODO: Not conforming the ontology. Need to rename those strings here
     private static final String TAG_Repoprefix = "ghrepo_";
     private static final String TAG_Commitprefix = "ghcom_";
@@ -70,7 +67,7 @@ public class Converter implements Runnable {
     private static boolean prefixing = true; //default: use prefixing
     private static int mode = 0; //default: 0 = base64, 1 = base32, 2 = base16, 3 = base10
 
-    private static final Map<String, String> prefixTable = new HashMap<>();
+    static final Map<String, String> prefixTable = new HashMap<>();
     private static void initPrefixTable()
     {
         //ProjectCommits
@@ -487,20 +484,7 @@ public class Converter implements Runnable {
         }
     }
 
-    private static Statement trash;
 
-    private static HashMap<Long, BatchStatement> batches = new HashMap<>();
-    private static PreparedStatement defaultInsert = null;
-    private static PreparedStatement defaultSelect = null;
-    private static PreparedStatement insertIncoming = null;
-    private static PreparedStatement updateIncoming = null;
-    //private static BatchStatement batch = null;
-
-    /*TODO:
-        Do only one table, not incoming and outgoing. Do stuff like projects, users and commits first. Then, add a column "incoming"
-        to the table. If we treat this as a list, we can simply do update commands and append to the list
-        This should drastically reduce time required. However, it's not a perfect solution, as we cannot cluster many update queries into one query. Need some kind of sorting for that.
-    */
     private static void printTriples(String currentTriple, ArrayList<BufferedWriter> writers)
     {
         try {
@@ -514,142 +498,17 @@ public class Converter implements Runnable {
                 numTriples.addAndGet(ctr);
                 //TODO: This will cause an overflow. Need to use 64 bits!
             }
-            switch (sampling)
+            if(sampling == 0) {
+                writers.get(0).write(currentTriple);
+            }
+            else
             {
-                case 0:
-                    if(cluster != null) //use Cassandra to store data instead of a local file
-                    {
-                        //session.execute("insert into github.combined (k, v, bucket, inc) values ('dennis', 'smells', 'yeah', ['shit', 'crap', 'dung'])");
-                        //session.execute("update github.combined set inc = inc + ['and much more'] where bucket = 'yeah' and k = 'dennis'");
-
-                        BatchStatement batch;
-                        if(defaultInsert == null)
-                        {
-                            defaultInsert = session.prepare("insert into github.myTable (k, v, bucket) values (?, ?, ?)");
-                            insertIncoming = session.prepare("insert into github.incoming (k, inc, bucket) values (?, ?, ?)");
-                            updateIncoming = session.prepare("update github.incoming set inc = ? where bucket = ? and k = ?");
-                        }
-                        batch = batches.get(Thread.currentThread().getId());
-                        if(batch == null)
-                        {
-                            batch = new BatchStatement();
-                            batches.put(Thread.currentThread().getId(), batch);
-                        }
-                        int spaceIndex = currentTriple.indexOf(" ");
-                        //currentTriple.indexOf()
-                        //separating space (key, SPACE, value) is not stored in key or value
-
-                        //use last character of entity as bucket for partitioning
-                        Character bucket = currentTriple.charAt(spaceIndex - 1);
-                        if(bucket == ':')
-                        {
-                            bucket = '0';
-                        }
-
-                        String key = currentTriple.substring(0, spaceIndex);
-
-                        //TODO at end of process, submit batch
-                        batch.add(defaultInsert.bind(key, currentTriple.substring(spaceIndex + 1), bucket.toString()));
-                        if(batch.size() > 100) {
-                            //System.out.println("Batch size is " + batch.size());
-                            session.execute(batch);
-                            batch = batch.clear();
-                            batches.put(Thread.currentThread().getId(), batch);
-                        }
-
-
-                        //update in edges for nodes in those triples
-                        ArrayList<String> entities = extractConnectedEntities(currentTriple);
-
-
-                        //The code below drastically increases the time required for the parser to handle the dataset.
-                        //Enable it only to do some graph traversal stuff like BFS.
-
-                        //ConcurrentMap<String, String> concMap = new ConcurrentHashMap<>();
-                        //first element of concMap is partition key
-
-
-                        //lets try something stupid: no partitioning... lol
-
-
-
-                        //TODO: Create BatchStatement that is clustered by partition rather than by the outgoing node.
-
-
-                        BatchStatement batchStatement = new BatchStatement();
-
-
-                        if(defaultSelect == null)
-                        {
-                            defaultSelect = session.prepare(("select inc from github.incoming WHERE bucket = ? AND k = ?"));
-                        }
-
-                        for(String entity : entities)
-                        {
-                            //spaceIndex = entity.indexOf(" ");
-
-                            bucket = entity.charAt(entity.length() - 1);
-                            if(bucket == ':')
-                            {
-                                bucket = '0';
-                            }
-
-
-                            //TODO: BAD! This causes MASSIVE delays!!! Do an async query...
-                            ResultSet rs = session.execute(defaultSelect.bind("1", entity));
-                            Row res = rs.one();
-
-                            //IDEA:...
-                            //session.executeAsync()
-
-
-                            if(res == null) {
-                                //incomings = entity;
-                                try {
-                                    batchStatement.add(insertIncoming.bind(entity, key, "1"));
-                                }
-                                catch (IllegalStateException e)
-                                {
-                                    System.out.println("More than 65k entries. Triple is: " + currentTriple);
-                                    e.printStackTrace();
-                                    System.exit(1);
-                                }
-
-                            }
-                            else
-                            {
-                                String incomings = res.getString("inc");
-                                if(!incomings.contains(key)) {
-                                    incomings = incomings.concat("|" + key);
-                                    batchStatement.add(updateIncoming.bind(incomings, "1", entity));
-                                }
-                            }
-                            if(batchStatement.size() >= 100) //avoids crash where some repositories have > 65k commits, creating an overflow in the IDs for batch statements
-                            {
-                                session.execute(batchStatement);
-                                batchStatement = batchStatement.clear();
-                            }
-                            //check if there is a database entry for entity to append to, else create.
-
-                        }
-                        if(batchStatement.size() != 0) {
-                            session.execute(batchStatement);
-                            //batchStatement = batchStatement.clear();
-                        }
-
-                    }
-                    else {
-                        writers.get(0).write(currentTriple);
-                    }
-                    break;
-                //cases 1 and 2 (head/tail sampling) removed. doing those via bash instead for better performance
-                case 3:           //random sampling with given percentage(s)
+                    //random sampling with given percentage(s)
                     if(samplingPercentages.size() == 1) //only one sample to be generated
                     {
                         if(rnd.nextFloat() < samplingPercentages.get(0)){
                             writers.get(0).write(currentTriple);
                         }
-                        break;
                     }
                     else //multiple samples. Got one file handler per percentage
                     {
@@ -661,50 +520,6 @@ public class Converter implements Runnable {
                             }
                         }
                     }
-                    break;
-                case 4: case 5: //connected & bfs
-                //get last 2 digits of identifier, if its not a blank node (i.e. has no identifier)
-                if(currentTriple.charAt(2) == '[' || currentTriple.charAt(0) == '[' || currentTriple.charAt(1) == '[')
-                {
-                    return;
-                }
-                int index = currentTriple.indexOf(" "); //end of identifier
-                String identifier = currentTriple.substring(index - 2, index);
-                if(identifier.contains(":"))
-                {
-                    if(identifier.charAt(0) == ':')
-                    {
-                        identifier = identifier.replace(':', '0');
-                    }
-                    else
-                    {
-                        identifier = "00";
-                    }
-                }
-                if(!graphWriters.containsKey(identifier)) {
-                    File file = new File(rdfPath + identifier.charAt(0) + "/" + identifier.charAt(1) + ".ttl");
-                    if (!file.exists()) {
-                        File parentDirec = new File(rdfPath + identifier.charAt(0) + "/");
-                        if (!parentDirec.exists()) {
-                            //noinspection ResultOfMethodCallIgnored
-                            parentDirec.mkdirs();
-                        }
-                    }
-                    BufferedWriter wr = new BufferedWriter(new FileWriter(file));
-                    graphWriters.put(identifier, wr);
-                    wr.write(currentTriple); //avoid null pointer exception
-                    return;
-                }
-                //TODO: sometimes causes random nullpointerexceptions at start
-                graphWriters.get(identifier).write(currentTriple);
-                /*if(w == null)
-                {
-                    w = new BufferedWriter(new FileWriter(rdfPath + identifier.charAt(0) + "/" + identifier.charAt(1)), 32768);
-                    graphWriters.put(identifier, w);
-                }
-                w.write(currentTriple);*/
-                //TODO: Any kind of closing/reopening? Could create a FileWriter with append flag set to true
-                break;
             }
         }
         catch (java.io.IOException e)
@@ -720,6 +535,7 @@ public class Converter implements Runnable {
             CSVReader reader = new CSVReader(new FileReader(path + "commit_parents.csv"));
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "commit_parents", fileSizeBeforeSplit);
             if(sampling < 4) {
                 if (samplingPercentages.size() < 2) {
                     writers.add(new BufferedWriter(new FileWriter(path + "rdf/commit_parents.ttl"), 32768));
@@ -755,7 +571,13 @@ public class Converter implements Runnable {
                     abbreviated = true;
                 } else {
                     currentTriple.append(".\n"); //cannot use turtle abbreviation here
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
                     abbreviated = false;
                 }
@@ -771,7 +593,13 @@ public class Converter implements Runnable {
                     currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + curLine[1]) ).append( "."); //only specifying next object. subject/predicate are abbreviated
                 }
                 currentTriple.append("\n");
-                printTriples(currentTriple.toString(), writers);
+                if(fileSizeBeforeSplit == 0) {
+                    printTriples(currentTriple.toString(), writers);
+                }
+                else
+                {
+                    outputSplitter.write(currentTriple.toString());
+                }
             }
             for(BufferedWriter w : writers) {
                 w.close();
@@ -788,6 +616,7 @@ public class Converter implements Runnable {
     private static void parseCommits(String path) {
         try {
             CSVReader reader = new CSVReader(new FileReader(path + "commits.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "commits", fileSizeBeforeSplit);
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -817,7 +646,13 @@ public class Converter implements Runnable {
                     currentTriple.append(getPrefix(TAG_Semangit + "commit_repository") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + nextLine[4]) ).append( ";\n");
                 }
                 currentTriple.append(getPrefix(TAG_Semangit + "commit_created_at") ).append( " \"" ).append( formatDateTime(nextLine[5]) ).append( "\"^^xsd:dateTime.\n");
-                printTriples(currentTriple.toString(), writers);
+                if(fileSizeBeforeSplit == 0) {
+                    printTriples(currentTriple.toString(), writers);
+                }
+                else
+                {
+                    outputSplitter.write(currentTriple.toString());
+                }
                 currentTriple.setLength(0); //clear
             }
             for(BufferedWriter w : writers)
@@ -837,6 +672,8 @@ public class Converter implements Runnable {
     {
         try {
             CSVReader reader = new CSVReader(new FileReader(path + "followers.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "followers", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -869,7 +706,13 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_follows") ).append( " " ).append( b64(getPrefix(TAG_Semangit  + TAG_Userprefix) + nextLine[0]) ).append( ".");
                     currentTriple.append("\n");
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
 
                 }
@@ -883,7 +726,13 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_follows") ).append( " " ).append( b64(getPrefix(TAG_Semangit  + TAG_Userprefix) + nextLine[0]) ).append( ".");
                     currentTriple.append("\n");
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
 
                 }
@@ -905,6 +754,8 @@ public class Converter implements Runnable {
     private static void parseIssueEvents(String path) {
         try {
             CSVReader reader = new CSVReader(new FileReader(path + "issue_events.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "issue_events", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -940,7 +791,13 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_issue_event_for")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Issueprefix) + nextLine[1])).append(".");
                     currentTriple.append("\n");
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
                 }
                 else
@@ -958,7 +815,13 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_issue_event_for")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Issueprefix) + nextLine[1])).append(".");
                     currentTriple.append("\n");
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
                 }
             }
@@ -979,6 +842,8 @@ public class Converter implements Runnable {
     private static void parseIssueLabels(String path) {
         try {
             CSVReader reader = new CSVReader(new FileReader(path + "issue_labels.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "issue_labels", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -1024,7 +889,13 @@ public class Converter implements Runnable {
                     abbreviated = false;
                     currentTriple.append(".");
                     currentTriple.append("\n");
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
                 }
 
@@ -1043,7 +914,13 @@ public class Converter implements Runnable {
             }
             currentTriple.append(".");
             currentTriple.append("\n");
-            printTriples(currentTriple.toString(), writers);
+            if(fileSizeBeforeSplit == 0) {
+                printTriples(currentTriple.toString(), writers);
+            }
+            else
+            {
+                outputSplitter.write(currentTriple.toString());
+            }
             for(BufferedWriter w : writers) {
                 w.close();
             }
@@ -1059,6 +936,8 @@ public class Converter implements Runnable {
     private static void parseIssues(String path) {
         try {
             CSVReader reader = new CSVReader(new FileReader(path + "issues.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "issues", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -1110,7 +989,13 @@ public class Converter implements Runnable {
                 }
                 currentTriple.append(getPrefix(TAG_Semangit + "github_issue_created_at") ).append( " \"" ).append( formatDateTime(curLine[6]) ).append( "\"^^xsd:dateTime.");
                 currentTriple.append("\n");
-                printTriples(currentTriple.toString(), writers);
+                if(fileSizeBeforeSplit == 0) {
+                    printTriples(currentTriple.toString(), writers);
+                }
+                else
+                {
+                    outputSplitter.write(currentTriple.toString());
+                }
                 currentTriple.setLength(0);
                 curLine = nextLine;
 
@@ -1138,7 +1023,13 @@ public class Converter implements Runnable {
             }
             currentTriple.append(getPrefix(TAG_Semangit + "github_issue_created_at") ).append( " \"" ).append( curLine[6] ).append( "\".");
             currentTriple.append("\n");
-            printTriples(currentTriple.toString(), writers);
+            if(fileSizeBeforeSplit == 0) {
+                printTriples(currentTriple.toString(), writers);
+            }
+            else
+            {
+                outputSplitter.write(currentTriple.toString());
+            }
             currentTriple.setLength(0);
             for(BufferedWriter w : writers)
             {
@@ -1155,6 +1046,8 @@ public class Converter implements Runnable {
     {
         try {
             CSVReader reader = new CSVReader(new FileReader(path + "organization_members.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "organization_members", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -1184,7 +1077,13 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_organization_is_joined")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Userprefix) + nextLine[0])).append(".");
                     currentTriple.append("\n");
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
                 }
                 else
@@ -1195,7 +1094,13 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_organization_is_joined")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Userprefix) + nextLine[0])).append(".");
                     currentTriple.append("\n");
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
                 }
             }
@@ -1217,6 +1122,8 @@ public class Converter implements Runnable {
     {
         try {
             CSVReader reader = new CSVReader(new FileReader(path + "project_commits.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "project_commits", fileSizeBeforeSplit);
+
             StringBuilder sb = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -1261,7 +1168,13 @@ public class Converter implements Runnable {
                 }
                 else {
                     sb.append(".\n");
-                    printTriples(sb.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(sb.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(sb.toString());
+                    }
                     sb.setLength(0);
                 }
             }
@@ -1278,8 +1191,13 @@ public class Converter implements Runnable {
                 sb.append(b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + curLine[0]) ).append( " " ).append( getPrefix(TAG_Semangit + "repository_has_commit") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + curLine[1]) );
             }
             sb.append(".\n");
-            printTriples(sb.toString(), writers);
-            //System.out.println("Is this broken? " + sb.toString());
+            if(fileSizeBeforeSplit == 0) {
+                printTriples(sb.toString(), writers);
+            }
+            else
+            {
+                outputSplitter.write(sb.toString());
+            }            //System.out.println("Is this broken? " + sb.toString());
 
             for(BufferedWriter w : writers)
             {
@@ -1300,6 +1218,8 @@ public class Converter implements Runnable {
     {
         try {
             CSVReader reader = new CSVReader(new FileReader(path + "project_members.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "project_members", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -1331,7 +1251,13 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_project_joined")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + nextLine[0])).append(".");
                     currentTriple.append("\n");
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
                 }
                 else {
@@ -1342,7 +1268,13 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_project_joined")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + nextLine[0])).append(".");
                     currentTriple.append("\n");
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
                 }
             }
@@ -1365,6 +1297,8 @@ public class Converter implements Runnable {
     {
         try {
             CSVReader reader = new CSVReader(new FileReader(path + "projects.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "projects", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -1425,7 +1359,13 @@ public class Converter implements Runnable {
                 //Not taking "last update" into account, as we can easily compute that on a graph database. TODO: reconsider?
                 currentTriple.append(getPrefix(TAG_Semangit + "repository_created_at") ).append( " \"" ).append( formatDateTime(nextLine[6]) ).append( "\"^^xsd:dateTime.");
                 currentTriple.append("\n");
-                printTriples(currentTriple.toString(), writers);
+                if(fileSizeBeforeSplit == 0) {
+                    printTriples(currentTriple.toString(), writers);
+                }
+                else
+                {
+                    outputSplitter.write(currentTriple.toString());
+                }
                 currentTriple.setLength(0);
             }
             for(BufferedWriter w : writers)
@@ -1446,6 +1386,8 @@ public class Converter implements Runnable {
         try
         {
             CSVReader reader = new CSVReader(new FileReader(path + "pull_request_commits.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "pull_request_commits", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -1492,7 +1434,13 @@ public class Converter implements Runnable {
                     abbreviated = false;
                     currentTriple.append(".");
                     currentTriple.append("\n");
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
                 }
                 curLine = nextLine;
@@ -1508,7 +1456,13 @@ public class Converter implements Runnable {
             {
                 currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Pullrequestprefix) + curLine[0]) ).append( " " ).append( getPrefix(TAG_Semangit + "pull_request_has_commit") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + curLine[1]) ).append( ".\n");
             }
-            printTriples(currentTriple.toString(), writers);
+            if(fileSizeBeforeSplit == 0) {
+                printTriples(currentTriple.toString(), writers);
+            }
+            else
+            {
+                outputSplitter.write(currentTriple.toString());
+            }
             for(BufferedWriter w : writers)
             {
                 w.close();
@@ -1523,6 +1477,8 @@ public class Converter implements Runnable {
     private static void parsePullRequestHistory(String path) {
         try {
             CSVReader reader = new CSVReader(new FileReader(path + "pull_request_history.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "pull_request_history", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -1563,7 +1519,13 @@ public class Converter implements Runnable {
                         //TODO: Need some else part here to not end up with broken triples
                         currentTriple.append(getPrefix(TAG_Semangit + "github_pull_request_action_pull_request")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Pullrequestprefix) + nextLine[1])).append(".");
                         currentTriple.append("\n");
-                        printTriples(currentTriple.toString(), writers);
+                        if(fileSizeBeforeSplit == 0) {
+                            printTriples(currentTriple.toString(), writers);
+                        }
+                        else
+                        {
+                            outputSplitter.write(currentTriple.toString());
+                        }
                         currentTriple.setLength(0);
                     }
                 }
@@ -1584,7 +1546,13 @@ public class Converter implements Runnable {
                         //TODO: Need some else part here to not end up with broken triples
                         currentTriple.append(getPrefix(TAG_Semangit + "github_pull_request_action_pull_request")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Pullrequestprefix) + nextLine[1])).append(".");
                         currentTriple.append("\n");
-                        printTriples(currentTriple.toString(), writers);
+                        if(fileSizeBeforeSplit == 0) {
+                            printTriples(currentTriple.toString(), writers);
+                        }
+                        else
+                        {
+                            outputSplitter.write(currentTriple.toString());
+                        }
                         currentTriple.setLength(0);
                     }
                 }
@@ -1605,6 +1573,8 @@ public class Converter implements Runnable {
     private static void parsePullRequests(String path) {
         try {
             CSVReader reader = new CSVReader(new FileReader(path + "pull_requests.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "pull_requests", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -1658,7 +1628,13 @@ public class Converter implements Runnable {
                 }
                 currentTriple.append(".");
                 currentTriple.append("\n");
-                printTriples(currentTriple.toString(), writers);
+                if(fileSizeBeforeSplit == 0) {
+                    printTriples(currentTriple.toString(), writers);
+                }
+                else
+                {
+                    outputSplitter.write(currentTriple.toString());
+                }
                 currentTriple.setLength(0);
             }
             for(BufferedWriter w : writers)
@@ -1676,6 +1652,8 @@ public class Converter implements Runnable {
         try
         {
             CSVReader reader = new CSVReader(new FileReader(path + "repo_labels.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "repo_labels", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -1706,7 +1684,13 @@ public class Converter implements Runnable {
                 currentTriple.append("\n");
                 currentTriple.append(getPrefix(TAG_Semangit + "github_repo_label_name") ).append( " \"" ).append( nextLine[2] ).append( "\".");
                 currentTriple.append("\n");
-                printTriples(currentTriple.toString(), writers);
+                if(fileSizeBeforeSplit == 0) {
+                    printTriples(currentTriple.toString(), writers);
+                }
+                else
+                {
+                    outputSplitter.write(currentTriple.toString());
+                }
                 currentTriple.setLength(0);
             }
             for(BufferedWriter w : writers)
@@ -1772,6 +1756,8 @@ public class Converter implements Runnable {
         try
         {
             CSVReader reader = new CSVReader(new FileReader(path + "users.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "users", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -1890,7 +1876,13 @@ public class Converter implements Runnable {
                     currentTriple.append("true .");
                     currentTriple.append("\n");
                 }
-                printTriples(currentTriple.toString(), writers);
+                if(fileSizeBeforeSplit == 0) {
+                    printTriples(currentTriple.toString(), writers);
+                }
+                else
+                {
+                    outputSplitter.write(currentTriple.toString());
+                }
                 currentTriple.setLength(0);
 
             }
@@ -1916,6 +1908,8 @@ public class Converter implements Runnable {
     {
         try {
             CSVReader reader = new CSVReader(new FileReader(path + "watchers.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "watchers", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -1948,7 +1942,13 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_follows")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + nextLine[0])).append(".");
                     currentTriple.append("\n");
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
                 }
                 else
@@ -1961,7 +1961,13 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_follows")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + nextLine[0])).append(".");
                     currentTriple.append("\n");
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
                 }
             }
@@ -1986,6 +1992,8 @@ public class Converter implements Runnable {
     {
         try {
             CSVReader reader = new CSVReader(new FileReader(path + "project_languages.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "project_languages", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -2034,7 +2042,13 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_project_language_is")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Langprefix) + currentLang)).append(".");
                     currentTriple.append("\n");
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
                 }
                 else
@@ -2049,7 +2063,13 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_project_language_is")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Langprefix) + currentLang)).append(".");
                     currentTriple.append("\n");
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
                 }
             }
@@ -2085,6 +2105,8 @@ public class Converter implements Runnable {
     private static void parseCommitComments(String path) {
         try {
             CSVReader reader = new CSVReader(new FileReader(path + "commit_comments.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "commit_comments", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -2159,7 +2181,13 @@ public class Converter implements Runnable {
 
                 currentTriple.append(getPrefix(TAG_Semangit + "comment_created_at") ).append( " \"" ).append( formatDateTime(nextLine[7]) ).append( "\"^^xsd:dateTime.");
                 currentTriple.append("\n");
-                printTriples(currentTriple.toString(), writers);
+                if(fileSizeBeforeSplit == 0) {
+                    printTriples(currentTriple.toString(), writers);
+                }
+                else
+                {
+                    outputSplitter.write(currentTriple.toString());
+                }
                 currentTriple.setLength(0);
             }
             for(BufferedWriter w : writers)
@@ -2178,6 +2206,8 @@ public class Converter implements Runnable {
     private static void parseIssueComments(String path) {
         try {
             CSVReader reader = new CSVReader(new FileReader(path + "issue_comments.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "issue_comments", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -2217,7 +2247,13 @@ public class Converter implements Runnable {
                         currentTriple.append(getPrefix(TAG_Semangit + "comment_author")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Userprefix) + Integer.MAX_VALUE)).append("] a ").append(getPrefix(TAG_Semangit + "comment")).append("."); //TODO Double check this line
                         currentTriple.append("\n");
                     }
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
                 }
                 else
@@ -2231,7 +2267,13 @@ public class Converter implements Runnable {
 
                     currentTriple.append(getPrefix(TAG_Semangit + "comment_author")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Userprefix) + nextLine[1])).append(".");
                     currentTriple.append("\n");
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
                 }
             }
@@ -2252,6 +2294,8 @@ public class Converter implements Runnable {
     private static void parsePullRequestComments(String path) {
         try {
             CSVReader reader = new CSVReader(new FileReader(path + "pull_request_comments.csv"));
+            OutputSplitter outputSplitter = new OutputSplitter(rdfPath + "pull_request_comments", fileSizeBeforeSplit);
+
             StringBuilder currentTriple = new StringBuilder();
             ArrayList<BufferedWriter> writers = new ArrayList<>();
             if(sampling < 4) {
@@ -2339,7 +2383,13 @@ public class Converter implements Runnable {
                         currentTriple.append(getPrefix(TAG_Semangit + "comment_author")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Userprefix) + Integer.MAX_VALUE)).append("] a ").append(getPrefix(TAG_Semangit + "comment")).append("."); //TODO: Also check this line
                         currentTriple.append("\n");
                     }
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
                 }
                 else
@@ -2381,7 +2431,13 @@ public class Converter implements Runnable {
                         currentTriple.append(getPrefix(TAG_Semangit + "comment_author")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Userprefix) + Integer.MAX_VALUE)).append("] a ").append(getPrefix(TAG_Semangit + "comment")).append("."); //TODO: Also check this line
                         currentTriple.append("\n");
                     }
-                    printTriples(currentTriple.toString(), writers);
+                    if(fileSizeBeforeSplit == 0) {
+                        printTriples(currentTriple.toString(), writers);
+                    }
+                    else
+                    {
+                        outputSplitter.write(currentTriple.toString());
+                    }
                     currentTriple.setLength(0);
 
                 }
@@ -2400,7 +2456,7 @@ public class Converter implements Runnable {
 
 
     //TODO: Figgure out some way to check if this is the bottle neck when handling projects with 100k+ commmits... BIG ISSUE
-    private static ArrayList<String> extractConnectedEntities(String inputTripleString)
+/*    private static ArrayList<String> extractConnectedEntities(String inputTripleString)
     {
         String[] inputTriple = inputTripleString.split("\n");
         ArrayList<String> output = new ArrayList<>();
@@ -2444,7 +2500,7 @@ public class Converter implements Runnable {
             output.add(URI);
         }
         return output;
-    }
+    }*/
 
 
     /*
@@ -3050,7 +3106,16 @@ public class Converter implements Runnable {
                     onlyCommits = true;
                     System.out.println("Only handling commit related data!");
                 }
-                /*                else if(s.contains("-cassandra"))
+                else if(s.contains("-split"))
+                {
+                    String rightOfEql = s.substring(s.lastIndexOf("=") + 1);
+                    fileSizeBeforeSplit = Integer.parseInt(rightOfEql);
+                    System.out.println("Splitting output files after " + fileSizeBeforeSplit + "bytes.");
+                    System.out.println("Warning: This enforces not to create a combined output file!");
+                    mergeOutput = false;
+                }
+                /*
+                else if(s.contains("-cassandra"))
                 {
                     try
                     {
@@ -3161,6 +3226,27 @@ public class Converter implements Runnable {
                     e.printStackTrace();
                     errorCtr++;
                 }
+            }
+
+            if(fileSizeBeforeSplit > 0)
+            {
+                if (index.exists()) {
+                    File[] entries = index.listFiles(new FileFilter() {
+                        @Override
+                        public boolean accept(File file) {
+                            return file.getName().toLowerCase().endsWith("ttl");
+                        }
+                    });
+                    if (entries != null) {
+                        for (File currentFile : entries) {
+                            if (!currentFile.delete()) {
+                                System.out.println("Failed to delete existing file: " + index.getPath() + currentFile.getName());
+                                System.exit(1);
+                            }
+                        }
+                    }
+                }
+
             }
 
             String correctPath = args[0].concat("rdf/");
