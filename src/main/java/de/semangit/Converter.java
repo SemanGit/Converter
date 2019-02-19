@@ -2982,7 +2982,7 @@ public class Converter implements Runnable {
                     System.out.println("Running converter compiled at " + Converter.compileDate.toString());
                 }
             }
-            catch (URISyntaxException e)
+            catch (Exception e)
             {
                 System.out.println("(Not crucial) Failed to obtain compilation date.");
                 e.printStackTrace();
