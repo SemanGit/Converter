@@ -72,7 +72,7 @@ public class Converter implements Runnable {
     {
         //ProjectCommits
         prefixTable.put(TAG_Semangit + TAG_Repoprefix, ""); //most common prefix gets empty prefix in output
-        prefixTable.put(TAG_Semangit + "repository_has_commit", "a"); //TODO: wrong way around?!
+        prefixTable.put(TAG_Semangit + "commit_belongs_to_repository", "a");
         prefixTable.put(TAG_Semangit + TAG_Commitprefix, "b");
 
 
@@ -1162,12 +1162,12 @@ public class Converter implements Runnable {
                 if(abbreviated) //abbreviated in previous step. Only need to print object now
                 {
                     postIncrementCounter(TAG_Semangit + TAG_Commitprefix);
-                    postIncrementCounter(TAG_Semangit + "repository_has_commit");
+                    postIncrementCounter(TAG_Semangit + "commit_belongs_to_repository");
                     sb.append(b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + curLine[1])); //one commit for multiple repositories (branching / merging)
                 }
                 else //no abbreviation occurred. Full subject predicate object triple printed
                 {
-                    sb.append(b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + curLine[0]) ).append( " " ) .append( getPrefix(TAG_Semangit + "repository_has_commit") ).append( " " ) .append( b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + curLine[1]));
+                    sb.append(b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + curLine[0]) ).append( " " ) .append( getPrefix(TAG_Semangit + "commit_belongs_to_repository") ).append( " " ) .append( b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + curLine[1]));
                 }
 
                 abbreviated = (curLine[0].equals(nextLine[0]));
@@ -1193,12 +1193,12 @@ public class Converter implements Runnable {
             if(abbreviated) //abbreviated in previous step. Only need to print object now
             {
                 postIncrementCounter(TAG_Semangit + TAG_Commitprefix);
-                postIncrementCounter(TAG_Semangit + "repository_has_commit");
+                postIncrementCounter(TAG_Semangit + "commit_belongs_to_repository");
                 sb.append(b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + curLine[1]) ); //one commit for multiple repositories (branching / merging)
             }
             else //no abbreviation occurred. Full subject predicate object triple printed
             {
-                sb.append(b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + curLine[0]) ).append( " " ).append( getPrefix(TAG_Semangit + "repository_has_commit") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + curLine[1]) );
+                sb.append(b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + curLine[0]) ).append( " " ).append( getPrefix(TAG_Semangit + "commit_belongs_to_repository") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + curLine[1]) );
             }
             sb.append(".\n");
             if(fileSizeBeforeSplit == 0) {
