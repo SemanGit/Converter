@@ -3,7 +3,6 @@ package de.semangit;
 import com.opencsv.CSVReader;
 
 import java.io.*;
-import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -11,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Converter implements Runnable {
 
-    private static Date compileDate;
+    //private static Date compileDate;
 
     private static AtomicInteger numTriples;
 
@@ -43,24 +42,22 @@ public class Converter implements Runnable {
 
 
     //private static final String PREFIX_Semangit = "<http://www.semangit.de/ontology/>";
-    private static final String TAG_Semangit = "semangit:";
-    private static final String TAG_Userprefix = "ghuser_"; //TODO: Not conforming the ontology. Need to rename those strings here
-    private static final String TAG_Repoprefix = "ghrepo_";
-    private static final String TAG_Commitprefix = "ghcom_";
-    private static final String TAG_Commentprefix = "ghcomment_";
-    private static final String TAG_Issueprefix = "ghissue_";
-    private static final String TAG_Pullrequestprefix = "ghpr_";
-    private static final String TAG_Repolabelprefix = "ghlb_";
-    private static final String TAG_Langprefix = "ghlang_";
-    private static final String TAG_Followprefix = "ghfollow_";
-    private static final String TAG_Issue_Eventprefix = "ghissueevent_";
-    private static final String TAG_Orga_Join_Eventprefix = "ghorgajoinevent_";
-    private static final String TAG_Repo_Join_Eventprefix = "ghrepojoinevent_";
-    private static final String TAG_Issue_Commentprefix = "ghissuecomment_";
-    private static final String TAG_Pullrequest_Commentprefix = "ghprcomment_";
-    private static final String TAG_Repolangprefix = "ghrepolang_";
-    private static final String TAG_Pullrequest_Actionprefix = "ghpraction_";
-    private static final String TAG_Watcherprefix = "ghwatcher_";
+    private static final String TAG_Semangit = ""; //removed, otherwise we have useless "semangit:" in URI
+    private static final String TAG_Userprefix = "github_user";
+    private static final String TAG_Repoprefix = "github_project";
+    private static final String TAG_Commitprefix = "github_commit";
+    private static final String TAG_Commentprefix = "github_comment"; //contains all comments (issue, pull request, commit)
+    private static final String TAG_Issueprefix = "github_issue";
+    private static final String TAG_Pullrequestprefix = "github_pull_request";
+    private static final String TAG_Repolabelprefix = "github_repo_label";
+    private static final String TAG_Langprefix = "programming_language"; //programming language
+    private static final String TAG_Followprefix = "github_follow_event"; //contains followers and watchers
+    private static final String TAG_Issue_Eventprefix = "github_issue_event";
+    private static final String TAG_Orga_Join_Eventprefix = "github_organization_join_event";
+    private static final String TAG_Repo_Join_Eventprefix = "github_project_join_event";
+
+    private static final String TAG_Repolangprefix = "github_project_language"; //github project language
+    private static final String TAG_Pullrequest_Actionprefix = "github_pull_request_action";
 
     private static int errorCtr = 0;
 
@@ -79,13 +76,18 @@ public class Converter implements Runnable {
         //CommitParents
         prefixTable.put(TAG_Semangit + "commit_has_parent", "c");
 
+
+        //Comments (updated)
+        prefixTable.put(TAG_Semangit + TAG_Commentprefix, "d");
+
+
         //Followers
-        prefixTable.put(TAG_Semangit + "github_commit", "d");
+        //prefixTable.put(TAG_Semangit + "github_commit", "d");
         prefixTable.put(TAG_Semangit + "commit_sha", "e");
         prefixTable.put(TAG_Semangit + "commit_author", "f");
         prefixTable.put(TAG_Semangit + "commit_committed_by", "g");
         prefixTable.put(TAG_Semangit + "commit_created_at", "h");
-        prefixTable.put(TAG_Semangit + "github_follow_event", "i");
+        //prefixTable.put(TAG_Semangit + "github_follow_event", "i");
         prefixTable.put(TAG_Semangit + "github_following_since", "j");
         prefixTable.put(TAG_Semangit + "github_user_or_project", "k");
         prefixTable.put(TAG_Semangit + "github_follower", "l");
@@ -93,7 +95,7 @@ public class Converter implements Runnable {
         prefixTable.put(TAG_Semangit + "github_follows", "n");
 
         //Issue events
-        prefixTable.put(TAG_Semangit + "github_issue_event", "o");
+        //prefixTable.put(TAG_Semangit + "github_issue_event", "o");
         prefixTable.put(TAG_Semangit + "github_issue_event_created_at", "p");
         prefixTable.put(TAG_Semangit + "github_issue_event_action", "r");
         prefixTable.put(TAG_Semangit + "github_issue_event_actor", "s");
@@ -105,7 +107,7 @@ public class Converter implements Runnable {
         prefixTable.put(TAG_Semangit + "github_issue_label_used_by", "w");
 
         //Issues
-        prefixTable.put(TAG_Semangit + "github_issue", "x");
+        //prefixTable.put(TAG_Semangit + "github_issue", "x");
         prefixTable.put(TAG_Semangit + "github_issue_project", "y");
         prefixTable.put(TAG_Semangit + "github_issue_reporter", "z");
         prefixTable.put(TAG_Semangit + "github_issue_assignee", "A");
@@ -115,19 +117,19 @@ public class Converter implements Runnable {
 
 
         //Organization Members
-        prefixTable.put(TAG_Semangit + "github_organization_join_event", "E");
+        //prefixTable.put(TAG_Semangit + "github_organization_join_event", "E");
         prefixTable.put(TAG_Semangit + "github_organization_joined_at", "F");
         prefixTable.put(TAG_Semangit + "github_organization_joined_by", "G");
         prefixTable.put(TAG_Semangit + "github_organization_is_joined", "H");
 
         //Project Members
-        prefixTable.put(TAG_Semangit + "github_project_join_event", "I");
+        //prefixTable.put(TAG_Semangit + "github_project_join_event", "I");
         prefixTable.put(TAG_Semangit + "github_project_join_event_created_at", "J");
         prefixTable.put(TAG_Semangit + "github_project_joining_user", "K");
         prefixTable.put(TAG_Semangit + "github_project_joined", "L");
 
         //Projects
-        prefixTable.put(TAG_Semangit + "github_project", "M");
+        //prefixTable.put(TAG_Semangit + "github_project", "M");
         prefixTable.put(TAG_Semangit + "repository_url", "N");
         prefixTable.put(TAG_Semangit + "github_has_owner", "O");
         prefixTable.put(TAG_Semangit + "github_project_name", "P");
@@ -141,7 +143,7 @@ public class Converter implements Runnable {
         prefixTable.put(TAG_Semangit + "pull_request_has_commit", "V");
 
         //Pull Request History
-        prefixTable.put(TAG_Semangit + "github_pull_request_action", "W");
+        //prefixTable.put(TAG_Semangit + "github_pull_request_action", "W");
         prefixTable.put(TAG_Semangit + "github_pull_request_action_created_at", "X");
         prefixTable.put(TAG_Semangit + "github_pull_request_action_id", "Y");
         prefixTable.put(TAG_Semangit + "github_pull_request_action_type", "Z");
@@ -149,7 +151,7 @@ public class Converter implements Runnable {
         prefixTable.put(TAG_Semangit + "github_pull_request_action_pull_request", "ab");
 
         //Pull Requests
-        prefixTable.put(TAG_Semangit + "github_pull_request", "ac");
+        //prefixTable.put(TAG_Semangit + "github_pull_request", "ac");
         prefixTable.put(TAG_Semangit + "pull_request_base_project", "ad");
         prefixTable.put(TAG_Semangit + "pull_request_head_project", "ae");
         prefixTable.put(TAG_Semangit + "pull_request_base_commit", "af");
@@ -158,12 +160,12 @@ public class Converter implements Runnable {
         prefixTable.put(TAG_Semangit + "github_pull_request_intra_branch", "ai");
 
         //Repo Labels
-        prefixTable.put(TAG_Semangit + "github_repo_label", "aj");
+        //prefixTable.put(TAG_Semangit + "github_repo_label", "aj");
         prefixTable.put(TAG_Semangit + "github_repo_label_project", "ak");
         prefixTable.put(TAG_Semangit + "github_repo_label_name", "al");
 
         //User
-        prefixTable.put(TAG_Semangit + "github_user", "am");
+        //prefixTable.put(TAG_Semangit + "github_user", "am");
         prefixTable.put(TAG_Semangit + "github_login", "an");
         prefixTable.put(TAG_Semangit + "github_name", "ao");
         prefixTable.put(TAG_Semangit + "github_company", "ap");
@@ -189,12 +191,12 @@ public class Converter implements Runnable {
 
         //languages
         prefixTable.put(TAG_Semangit + TAG_Langprefix, "aD");
-        prefixTable.put(TAG_Semangit + "github_project_language", "aE");
+        //prefixTable.put(TAG_Semangit + "github_project_language", "aE");
         prefixTable.put(TAG_Semangit + "github_project_language_bytes", "aF");
         prefixTable.put(TAG_Semangit + "github_project_language_timestamp", "aG");
         prefixTable.put(TAG_Semangit + "github_project_language_repo", "aH");
         prefixTable.put(TAG_Semangit + "github_project_language_is", "aI");
-        prefixTable.put(TAG_Semangit + "programming_language", "aO");
+        //prefixTable.put(TAG_Semangit + "programming_language", "aO");
         prefixTable.put(TAG_Semangit + "programming_language_name", "aP");
 
 
@@ -214,11 +216,11 @@ public class Converter implements Runnable {
         prefixTable.put(TAG_Semangit + TAG_Issue_Eventprefix, "cf");
         prefixTable.put(TAG_Semangit + TAG_Orga_Join_Eventprefix, "cg");
         prefixTable.put(TAG_Semangit + TAG_Repo_Join_Eventprefix, "ch");
-        prefixTable.put(TAG_Semangit + TAG_Issue_Commentprefix, "ci");
-        prefixTable.put(TAG_Semangit + TAG_Pullrequest_Commentprefix, "cj");
+        //prefixTable.put(TAG_Semangit + TAG_Issue_Commentprefix, "ci");
+        //prefixTable.put(TAG_Semangit + TAG_Pullrequest_Commentprefix, "cj");
         prefixTable.put(TAG_Semangit + TAG_Repolangprefix, "ck");
         prefixTable.put(TAG_Semangit + TAG_Pullrequest_Actionprefix, "cl");
-        prefixTable.put(TAG_Semangit + TAG_Watcherprefix, "cm");
+        //prefixTable.put(TAG_Semangit + TAG_Watcherprefix, "cm");
         //tag "CD" used farther up
 
     }
@@ -432,6 +434,11 @@ public class Converter implements Runnable {
             StringBuilder sb = new StringBuilder();
             try {
                 String rightOfColon = input.substring(input.indexOf(":") + 1);
+                if(Character.isLetter(rightOfColon.charAt(0)))
+                {
+                    sb.append(rightOfColon.charAt(0));
+                    rightOfColon = rightOfColon.substring(1);
+                }
                 String leftOfColon = input.substring(0, input.indexOf(":") + 1);
 
                 int in = Integer.parseInt(rightOfColon);
@@ -721,7 +728,7 @@ public class Converter implements Runnable {
                 }
                 else
                 {
-                    currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Followprefix) + idCtr++)).append(" a " ).append( getPrefix(TAG_Semangit + "github_follow_event") ).append( ";");
+                    currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Followprefix) + "f" + idCtr++)).append(" a " ).append( getPrefix(TAG_Semangit + "github_follow_event") ).append( ";");
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_following_since") ).append( " \"" ).append( nextLine[2] ).append( "\";");
                     currentTriple.append("\n");
@@ -1027,7 +1034,7 @@ public class Converter implements Runnable {
                 currentTriple.append(getPrefix(TAG_Semangit + "github_issue_pull_request") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Pullrequestprefix) + curLine[5]) ).append( ";");
                 currentTriple.append("\n");
             }
-            currentTriple.append(getPrefix(TAG_Semangit + "github_issue_created_at") ).append( " \"" ).append( curLine[6] ).append( "\".");
+            currentTriple.append(getPrefix(TAG_Semangit + "github_issue_created_at") ).append( " \"" ).append( formatDateTime(curLine[6]) ).append( "\"^^xsd:dateTime.");
             currentTriple.append("\n");
             if(fileSizeBeforeSplit == 0) {
                 printTriples(currentTriple.toString(), writers);
@@ -1979,7 +1986,7 @@ public class Converter implements Runnable {
                 }
                 else
                 {
-                    currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Watcherprefix) + idCtr++)).append(" a ").append(getPrefix(TAG_Semangit + "github_follow_event")).append(";");
+                    currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Followprefix) + "w" + idCtr++)).append(" a ").append(getPrefix(TAG_Semangit + "github_follow_event")).append(";");
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_following_since")).append(" \"").append(formatDateTime(nextLine[2])).append("\"^^xsd:dateTime;");
                     currentTriple.append("\n");
@@ -2180,7 +2187,7 @@ public class Converter implements Runnable {
                 for (int i = 0; i < nextLine.length; i++) {
                     nextLine[i] = groovy.json.StringEscapeUtils.escapeJava(nextLine[i]);
                 }
-                currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commentprefix + "commit_") + nextLine[0]) ).append( " a " ).append( getPrefix(TAG_Semangit + "comment") ).append( ";");
+                currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commentprefix) + "c" + nextLine[0]) ).append( " a " ).append( getPrefix(TAG_Semangit + "comment") ).append( ";");
                 currentTriple.append("\n");
                 if(!nextLine[1].equals("N") && !nextLine[1].equals("")){
                     currentTriple.append(getPrefix(TAG_Semangit + "comment_for") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + nextLine[1]) ).append( ";"); //comment for a commit
@@ -2268,7 +2275,7 @@ public class Converter implements Runnable {
                     currentTriple.append("[").append(getPrefix(TAG_Semangit + "comment_for")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Issueprefix) + nextLine[0])).append(";"); //comment for an issue
                     currentTriple.append("\n");
 
-                    currentTriple.append(getPrefix(TAG_Semangit + "comment_created_at")).append(" \"").append(nextLine[3]).append("\";"); //TODO: ^^xsd_date stuff
+                    currentTriple.append(getPrefix(TAG_Semangit + "comment_created_at")).append(" \"").append(formatDateTime(nextLine[3])).append("\"^^xsd:dateTime;");
                     currentTriple.append("\n");
 
                     if (!nextLine[1].equals("") && !nextLine[1].equals("N")) {
@@ -2290,11 +2297,11 @@ public class Converter implements Runnable {
                 }
                 else
                 {
-                    currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Issue_Commentprefix) + idCtr++)).append(" a ").append(getPrefix(TAG_Semangit + "comment")).append(";\n");
+                    currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commentprefix) + "i" + idCtr++)).append(" a ").append(getPrefix(TAG_Semangit + "comment")).append(";\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "comment_for")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Issueprefix) + nextLine[0])).append(";"); //comment for an issue
                     currentTriple.append("\n");
 
-                    currentTriple.append(getPrefix(TAG_Semangit + "comment_created_at")).append(" \"").append(nextLine[3]).append("\";"); //TODO: ^^xsd_date stuff
+                    currentTriple.append(getPrefix(TAG_Semangit + "comment_created_at")).append(" \"").append(formatDateTime(nextLine[3])).append("\"^^xsd:dateTime;");
                     currentTriple.append("\n");
 
                     currentTriple.append(getPrefix(TAG_Semangit + "comment_author")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Userprefix) + nextLine[1])).append(".");
@@ -2395,7 +2402,7 @@ public class Converter implements Runnable {
                         currentTriple.append("\n");
                     }
                     if (!nextLine[6].equals("") && !nextLine[6].equals("N")) {
-                        currentTriple.append(getPrefix(TAG_Semangit + "comment_created_at")).append(" \"").append(nextLine[6]).append("\";"); //TODO ^^xsd:date stuff
+                        currentTriple.append(getPrefix(TAG_Semangit + "comment_created_at")).append(" \"").append(formatDateTime(nextLine[6])).append("\"^^xsd:dateTime;");
                         currentTriple.append("\n");
                     }
                     if (!nextLine[3].equals("") && !nextLine[3].equals("N")) {
@@ -2428,7 +2435,7 @@ public class Converter implements Runnable {
                 }
                 else
                 {
-                    currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Pullrequest_Commentprefix) + idCtr++)).append(" a ").append(getPrefix(TAG_Semangit + "comment")).append(";\n");
+                    currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commentprefix) + "p" +  idCtr++)).append(" a ").append(getPrefix(TAG_Semangit + "comment")).append(";\n");
                     if (!nextLine[0].equals("")) {
                         currentTriple.append(getPrefix(TAG_Semangit + "comment_for")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Pullrequestprefix) + nextLine[0])); //comment for a pull request
                         if (!nextLine[5].equals("") && !nextLine[5].equals("N")) {
@@ -2443,7 +2450,7 @@ public class Converter implements Runnable {
                         currentTriple.append("\n");
                     }
                     if (!nextLine[6].equals("") && !nextLine[6].equals("N")) {
-                        currentTriple.append(getPrefix(TAG_Semangit + "comment_created_at")).append(" \"").append(nextLine[6]).append("\";"); //TODO ^^xsd:date stuff
+                        currentTriple.append(getPrefix(TAG_Semangit + "comment_created_at")).append(" \"").append(formatDateTime(nextLine[6])).append("\"^^xsd:dateTime;");
                         currentTriple.append("\n");
                     }
                     if (!nextLine[3].equals("") && !nextLine[3].equals("N")) {
@@ -2946,7 +2953,7 @@ public class Converter implements Runnable {
                         writer.write("@prefix semangit: <http://semangit.de/ontology/>.");
                         printVoID(writer);
                         for (Map.Entry<String, String> entry : entries) {
-                            writer.write("@prefix " + entry.getValue() + ": <http://semangit.de/ontology/" + entry.getKey() + "#>.");
+                            writer.write("@prefix " + entry.getValue() + ": <http://semangit.de/ontology/" + entry.getKey() + ">.");
                             writer.newLine();
                         }
                         writer.close();
