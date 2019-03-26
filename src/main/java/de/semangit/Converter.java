@@ -46,7 +46,7 @@ public class Converter implements Runnable {
     private static final String TAG_Userprefix = "github_user";
     private static final String TAG_Repoprefix = "github_project";
     private static final String TAG_Commitprefix = "github_commit";
-    private static final String TAG_Commentprefix = "github_comment"; //contains all comments (issue, pull request, commit)
+    private static final String TAG_Commentprefix = "comment"; //contains all comments (issue, pull request, commit)
     private static final String TAG_Issueprefix = "github_issue";
     private static final String TAG_Pullrequestprefix = "github_pull_request";
     private static final String TAG_Repolabelprefix = "github_repo_label";
@@ -179,7 +179,7 @@ public class Converter implements Runnable {
         //Watchers == Followers
 
         //Comments
-        prefixTable.put(TAG_Semangit + "comment", "XY"); //giving it a completely new name, as there was a duplicate error before
+        //prefixTable.put(TAG_Semangit + "comment", "XY"); //giving it a completely new name, as there was a duplicate error before
         prefixTable.put(TAG_Semangit + TAG_Commentprefix + "commit_", "aw");
         prefixTable.put(TAG_Semangit + "comment_for", "ax");
         prefixTable.put(TAG_Semangit + "comment_author", "ay");
@@ -425,6 +425,15 @@ public class Converter implements Runnable {
         return false;
     }
 
+    private static String b64(String usualInput, String prefix)
+    {
+        String res = b64(usualInput);
+        String rightOfColon = res.substring(res.indexOf(":") + 1);
+        String leftOfColon = res.substring(0, res.indexOf(":") + 1);
+        return leftOfColon + prefix + rightOfColon;
+    }
+
+
     private static String b64(String input)
     {
         if(mode == 0) {
@@ -434,11 +443,12 @@ public class Converter implements Runnable {
             StringBuilder sb = new StringBuilder();
             try {
                 String rightOfColon = input.substring(input.indexOf(":") + 1);
-                if(Character.isLetter(rightOfColon.charAt(0)))
+/*                if(Character.isLetter(rightOfColon.charAt(0)))
                 {
                     sb.append(rightOfColon.charAt(0));
                     rightOfColon = rightOfColon.substring(1);
                 }
+*/
                 String leftOfColon = input.substring(0, input.indexOf(":") + 1);
 
                 int in = Integer.parseInt(rightOfColon);
@@ -710,7 +720,7 @@ public class Converter implements Runnable {
                 {
                     currentTriple.append("[ a " ).append( getPrefix(TAG_Semangit + "github_follow_event") ).append( ";");
                     currentTriple.append("\n");
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_following_since") ).append( " \"" ).append( nextLine[2] ).append( "\";");
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_following_since") ).append( " \"" ).append( formatDateTime(nextLine[2]) ).append( "\"^^xsd:dateTime;");
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_user_or_project") ).append( " false ] " ).append( getPrefix(TAG_Semangit + "github_follower") ).append( " " ).append( b64(getPrefix(TAG_Semangit  + TAG_Userprefix) + nextLine[1]) ).append( ";");
                     currentTriple.append("\n");
@@ -728,9 +738,9 @@ public class Converter implements Runnable {
                 }
                 else
                 {
-                    currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Followprefix) + "f" + idCtr++)).append(" a " ).append( getPrefix(TAG_Semangit + "github_follow_event") ).append( ";");
+                    currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Followprefix) + idCtr++, "ghf")).append(" a " ).append( getPrefix(TAG_Semangit + "github_follow_event") ).append( ";");
                     currentTriple.append("\n");
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_following_since") ).append( " \"" ).append( nextLine[2] ).append( "\";");
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_following_since") ).append( " \"" ).append( formatDateTime(nextLine[2]) ).append( "\"^^xsd:dateTime;");
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_user_or_project") ).append( " false ;\n " ).append( getPrefix(TAG_Semangit + "github_follower") ).append( " " ).append( b64(getPrefix(TAG_Semangit  + TAG_Userprefix) + nextLine[1]) ).append( ";");
                     currentTriple.append("\n");
@@ -1986,7 +1996,7 @@ public class Converter implements Runnable {
                 }
                 else
                 {
-                    currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Followprefix) + "w" + idCtr++)).append(" a ").append(getPrefix(TAG_Semangit + "github_follow_event")).append(";");
+                    currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Followprefix) + idCtr++, "ghw")).append(" a ").append(getPrefix(TAG_Semangit + "github_follow_event")).append(";");
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_following_since")).append(" \"").append(formatDateTime(nextLine[2])).append("\"^^xsd:dateTime;");
                     currentTriple.append("\n");
@@ -2187,7 +2197,7 @@ public class Converter implements Runnable {
                 for (int i = 0; i < nextLine.length; i++) {
                     nextLine[i] = groovy.json.StringEscapeUtils.escapeJava(nextLine[i]);
                 }
-                currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commentprefix) + "c" + nextLine[0]) ).append( " a " ).append( getPrefix(TAG_Semangit + "comment") ).append( ";");
+                currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commentprefix) + nextLine[0], "ghc") ).append( " a " ).append( getPrefix(TAG_Semangit + "comment") ).append( ";");
                 currentTriple.append("\n");
                 if(!nextLine[1].equals("N") && !nextLine[1].equals("")){
                     currentTriple.append(getPrefix(TAG_Semangit + "comment_for") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Commitprefix) + nextLine[1]) ).append( ";"); //comment for a commit
@@ -2283,7 +2293,7 @@ public class Converter implements Runnable {
                         currentTriple.append("\n");
                     } else {
                         System.out.println("Warning! Invalid user found in parseIssueComments. Using MAX_INT as userID.");
-                        currentTriple.append(getPrefix(TAG_Semangit + "comment_author")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Userprefix) + Integer.MAX_VALUE)).append("] a ").append(getPrefix(TAG_Semangit + "comment")).append("."); //TODO Double check this line
+                        currentTriple.append(getPrefix(TAG_Semangit + "comment_author")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Userprefix) + Integer.MAX_VALUE)).append("] a ").append(getPrefix(TAG_Semangit + "comment")).append(".");
                         currentTriple.append("\n");
                     }
                     if(fileSizeBeforeSplit == 0) {
@@ -2297,7 +2307,7 @@ public class Converter implements Runnable {
                 }
                 else
                 {
-                    currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commentprefix) + "i" + idCtr++)).append(" a ").append(getPrefix(TAG_Semangit + "comment")).append(";\n");
+                    currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commentprefix) + idCtr++, "ghi")).append(" a ").append(getPrefix(TAG_Semangit + "comment")).append(";\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "comment_for")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Issueprefix) + nextLine[0])).append(";"); //comment for an issue
                     currentTriple.append("\n");
 
@@ -2435,7 +2445,7 @@ public class Converter implements Runnable {
                 }
                 else
                 {
-                    currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commentprefix) + "p" +  idCtr++)).append(" a ").append(getPrefix(TAG_Semangit + "comment")).append(";\n");
+                    currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Commentprefix) +  idCtr++, "ghp")).append(" a ").append(getPrefix(TAG_Semangit + "comment")).append(";\n");
                     if (!nextLine[0].equals("")) {
                         currentTriple.append(getPrefix(TAG_Semangit + "comment_for")).append(" ").append(b64(getPrefix(TAG_Semangit + TAG_Pullrequestprefix) + nextLine[0])); //comment for a pull request
                         if (!nextLine[5].equals("") && !nextLine[5].equals("N")) {
@@ -2920,7 +2930,7 @@ public class Converter implements Runnable {
                     printVoID(new BufferedWriter(new FileWriter(directory.concat("dataset.void")), 32768));
                     writer.write("@prefix semangit: <http://semangit.de/ontology/>.");
                     for (Map.Entry<String, String> entry : entries) {
-                        writer.write("@prefix " + entry.getValue() + ": <http://semangit.de/ontology/" + entry.getKey() + "#>.");
+                        writer.write("@prefix " + entry.getValue() + ": <http://semangit.de/ontology/" + entry.getKey() + "/>.");
                         writer.newLine();
                     }
                     writer.close();
