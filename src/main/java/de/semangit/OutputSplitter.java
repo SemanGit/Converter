@@ -79,12 +79,12 @@ class OutputSplitter {
 
     void CloseWriter()
     {
-        try {
-            w.close();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
+        if(Converter.fileSizeBeforeSplit != 0) {
+            try {
+                w.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
