@@ -67,6 +67,7 @@ public class Converter implements Runnable {
     static final Map<String, String> prefixTable = new HashMap<>();
     private static void initPrefixTable()
     {
+
         //ProjectCommits
         prefixTable.put(TAG_Semangit + TAG_Repoprefix, ""); //most common prefix gets empty prefix in output
         prefixTable.put(TAG_Semangit + "commit_belongs_to_repository", "a");
@@ -1890,13 +1891,13 @@ public class Converter implements Runnable {
 
                 if(!nextLine[10].equals("N") && !nextLine[10].equals(""))
                 {
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_state") ).append( " \"" ).append( nextLine[10] ).append( "\";");
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_state") ).append( " dbr:" ).append( nextLine[10].replaceAll(" ", "_") ).append( " ;");
                     currentTriple.append("\n");
                 }
 
                 if(!nextLine[11].equals("N") && !nextLine[11].equals(""))
                 {
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_city") ).append( " \"" ).append( nextLine[11] ).append( "\";");
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_city") ).append( " dbr:" ).append( nextLine[11].replaceAll(" ", "_") ).append( " ;");
                     currentTriple.append("\n");
                 }
 
@@ -2961,7 +2962,11 @@ public class Converter implements Runnable {
                         BufferedWriter writer = new BufferedWriter(new FileWriter(outPath), 32768);
                         final Set<Map.Entry<String, String>> entries = prefixTable.entrySet();
                         writer.write("@prefix semangit: <http://semangit.de/ontology/>.");
+                        writer.newLine();
+                        writer.write("@prefix dbr: <http://dbpedia.org/resource/>");
+                        writer.newLine();
                         printVoID(writer);
+
                         for (Map.Entry<String, String> entry : entries) {
                             writer.write("@prefix " + entry.getValue() + ": <http://semangit.de/ontology/" + entry.getKey() + ">.");
                             writer.newLine();
