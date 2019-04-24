@@ -991,7 +991,7 @@ public class Converter implements Runnable {
                     curLine = nextLine;
                     continue;
                 }
-                String issueURL = b64(getPrefix(TAG_Semangit + TAG_Issueprefix) + curLine[7]);
+                String issueURL = b64(getPrefix(TAG_Semangit + TAG_Issueprefix) + curLine[0]);
                 currentTriple.append( issueURL ).append( " a " ).append( getPrefix(TAG_Semangit + "github_issue") ).append( ";");
                 currentTriple.append("\n");
                 currentTriple.append(getPrefix(TAG_Semangit + "github_issue_project") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + curLine[1]) ).append( ";");
@@ -1025,7 +1025,7 @@ public class Converter implements Runnable {
 
             }
             //Handle last line
-            String issueURL = b64(getPrefix(TAG_Semangit + TAG_Issueprefix) + curLine[7]);
+            String issueURL = b64(getPrefix(TAG_Semangit + TAG_Issueprefix) + curLine[0]);
             currentTriple.append( issueURL ).append( " a " ).append( getPrefix(TAG_Semangit + "github_issue") ).append( ";");
             currentTriple.append("\n");
             currentTriple.append(getPrefix(TAG_Semangit + "github_issue_project") ).append( " " ).append( b64(getPrefix(TAG_Semangit + TAG_Repoprefix) + curLine[1]) ).append( ";");
@@ -2777,6 +2777,7 @@ public class Converter implements Runnable {
     //TODO: This does not belong inside the combined.ttl file, but into a separate void.ttl file. Then we can also add meta info such as number of triples etc.
     private static void printVoID(BufferedWriter w)
     {
+        System.out.println("printvoid called");
         try {
             w.write("@prefix void: <http://rdfs.org/ns/void#> .");
             w.newLine();
@@ -2818,7 +2819,7 @@ public class Converter implements Runnable {
             w.newLine();
             w.write("foaf:homepage <http://semangit.de/>;");
             w.newLine();
-            w.write("foaf:page <http://semangit.de/downloads/>;"); //TODO
+            w.write("foaf:page <http://semangit.de/#downloads>;");
             w.newLine();
             w.write("dcterms:title \"SemanGit\";");
             w.newLine();
@@ -2857,18 +2858,6 @@ public class Converter implements Runnable {
             //w.write("void:dataDump <http://semangit.de/latest/>;"); //todo
             //w.newLine();
 
-            w.write("void:exampleResource <>;");
-            w.newLine();
-            w.write("void:exampleResource <>;");
-            w.newLine();
-            w.write("void:exampleResource <>;");
-            w.newLine();
-
-            w.write("void:uriSpace \"http://semangit.de/\";");
-            w.newLine();
-
-            //void:vocabulary -- give URIs of all vocabularies used?!
-
             /*
             w.write("void:triples ;");
             w.newLine();
@@ -2884,8 +2873,20 @@ public class Converter implements Runnable {
             w.newLine();
             */
 
-            w.write(" .");
+/*            w.write("void:exampleResource <>;");
             w.newLine();
+            w.write("void:exampleResource <>;");
+            w.newLine();
+            w.write("void:exampleResource <>;");
+            w.newLine();
+ */
+
+            w.write("void:uriSpace \"http://semangit.de/\" .");
+            w.newLine();
+
+            //void:vocabulary -- give URIs of all vocabularies used?!
+
+
 
             w.write("meta:Dennis a foaf:Person;");
             w.newLine();
@@ -2908,6 +2909,7 @@ public class Converter implements Runnable {
             w.write("foaf:mbox <mailto:damien.graux@iais.fraunhofer.de> .");
             w.newLine();
 
+            w.close();
 
         }
         catch (IOException e)
@@ -3304,6 +3306,10 @@ public class Converter implements Runnable {
                     });
                     if (entries != null) {
                         for (File currentFile : entries) {
+                            if(currentFile.getName().contains("dataset.void"))
+                            {
+                                continue;
+                            }
                             if (!currentFile.delete()) {
                                 System.out.println("Failed to delete existing file: " + index.getPath() + currentFile.getName());
                                 System.exit(1);
@@ -3380,6 +3386,10 @@ public class Converter implements Runnable {
                         }
                     }
                 }
+            }
+            else
+            {
+                printVoID(new BufferedWriter(new FileWriter(correctPath.concat("dataset.void")), 32768));
             }
         }
         catch (Exception e) {
