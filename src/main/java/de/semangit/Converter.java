@@ -167,9 +167,9 @@ public class Converter implements Runnable {
 
         //User
         //prefixTable.put(TAG_Semangit + "github_user", "am");
-        prefixTable.put(TAG_Semangit + "github_login", "an");
-        prefixTable.put(TAG_Semangit + "github_name", "ao");
-        prefixTable.put(TAG_Semangit + "github_company", "ap");
+        prefixTable.put(TAG_Semangit + "github_user_login", "an");
+        prefixTable.put(TAG_Semangit + "github_user_name", "ao");
+        prefixTable.put(TAG_Semangit + "github_user_company", "ap");
         prefixTable.put(TAG_Semangit + "github_user_location", "aq");
         prefixTable.put(TAG_Semangit + "user_email", "ar");
         prefixTable.put(TAG_Semangit + "github_user_created_at", "as");
@@ -1831,17 +1831,17 @@ public class Converter implements Runnable {
                 currentTriple.append("\n");
                 if(!nextLine[1].equals("N"))
                 {
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_login") ).append( " \"" ).append( nextLine[1] ).append( "\";");
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_login") ).append( " \"" ).append( nextLine[1] ).append( "\";");
                     currentTriple.append("\n");
                 }
                 /*if(!nextLine[2].equals("N"))
                 {
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_name") + " \"" + nextLine[2] + "\";");
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_name") + " \"" + nextLine[2] + "\";");
                     currentTriple.append("\n");
                 }*/
                 if(!nextLine[2].equals("N"))
                 {
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_company") ).append( " \"" ).append( nextLine[2] ).append( "\";");
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_company") ).append( " \"" ).append( nextLine[2] ).append( "\";");
                     currentTriple.append("\n");
                 }
                 if(!nextLine[3].equals("N"))
