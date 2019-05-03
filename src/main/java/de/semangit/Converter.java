@@ -2054,7 +2054,7 @@ public class Converter implements Runnable {
 
             String[] nextLine;
             Map<String, Integer> languages = new HashMap<>();
-            int langCtr = 0;
+            int langCtr = -1;
             int idCtr = 0;
             int currentLang;
 
@@ -2071,7 +2071,7 @@ public class Converter implements Runnable {
                 }
                 else
                 {
-                    languages.put(nextLine[1], langCtr++);
+                    languages.put(nextLine[1], ++langCtr);
                     currentTriple.append(b64(getPrefix(TAG_Semangit + TAG_Langprefix) + langCtr) ).append( " a " ).append( getPrefix(TAG_Semangit + "programming_language") ).append( ";");
                     currentTriple.append("\n");
                     currentTriple.append(getPrefix(TAG_Semangit + "programming_language_name") ).append( " \"" ).append( nextLine[1] ).append( "\".");
