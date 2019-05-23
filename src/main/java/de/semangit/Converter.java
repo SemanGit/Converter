@@ -273,8 +273,8 @@ public class Converter implements Runnable {
             }
             return prefixTable.get(s) + ":";
         }
-        else {
-            return s;
+        else { //TODO: verify integrity
+            return "<http://semangit.de/ontology/" + s + "#>"; //close brackets
         }
     }
 
@@ -428,6 +428,10 @@ public class Converter implements Runnable {
 
     private static String b64(String usualInput, String prefix)
     {
+        //if(!prefixing) {
+        //   return prefix + right
+        //}
+
         String res = b64(usualInput);
         String rightOfColon = res.substring(res.indexOf(":") + 1);
         String leftOfColon = res.substring(0, res.indexOf(":") + 1);
@@ -457,6 +461,10 @@ public class Converter implements Runnable {
                 for (int i = 0; i < j; i++) {
                     sb.append(alphabet64.charAt(in % alphabet64.length()));
                     in /= alphabet64.length();
+                }
+                if(j == 0) //log(1)=0, so the for loop above is not executed in this case
+                {
+                    sb.append("1");
                 }
                 return leftOfColon + sb.reverse().toString();
             } catch (Exception e) {
@@ -498,6 +506,10 @@ public class Converter implements Runnable {
         }
         else {
             //no conversion
+            if(!prefixing)
+            {
+                return input.replace(">", "") + ">";
+            }
             return input;
         }
     }
