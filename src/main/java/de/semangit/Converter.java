@@ -273,7 +273,7 @@ public class Converter implements Runnable {
             }
             return prefixTable.get(s) + ":";
         }
-        else { //TODO: verify integrity
+        else {
             return "<http://semangit.de/ontology/" + s + "#>"; //close brackets
         }
     }
@@ -2944,6 +2944,12 @@ public class Converter implements Runnable {
                     final Set<Map.Entry<String, String>> entries = prefixTable.entrySet();
                     printVoID(new BufferedWriter(new FileWriter(directory.concat("dataset.void")), 32768));
                     writer.write("@prefix semangit: <http://semangit.de/ontology/>.");
+                    writer.newLine();
+                    writer.write("@prefix dbr: <http://dbpedia.org/resource/>.");
+                    writer.newLine();
+                    writer.write("@prefix dbo: <http://dbpedia.org/ontology/>.");
+                    writer.newLine();
+
                     for (Map.Entry<String, String> entry : entries) {
                         writer.write("@prefix " + entry.getValue() + ": <http://semangit.de/ontology/" + entry.getKey() + "/>.");
                         writer.newLine();
@@ -2978,6 +2984,8 @@ public class Converter implements Runnable {
                         writer.write("@prefix semangit: <http://semangit.de/ontology/>.");
                         writer.newLine();
                         writer.write("@prefix dbr: <http://dbpedia.org/resource/>");
+                        writer.newLine();
+                        writer.write("@prefix dbo: <http://dbpedia.org/ontology/>");
                         writer.newLine();
                         printVoID(writer);
 
