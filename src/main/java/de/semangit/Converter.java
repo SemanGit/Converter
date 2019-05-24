@@ -1903,13 +1903,13 @@ public class Converter implements Runnable {
 
                 if(!nextLine[10].equals("N") && !nextLine[10].equals(""))
                 {
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_state") ).append( " dbr:" ).append( nextLine[10].replaceAll(" ", "_") ).append( " ;");
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_state") ).append( " dbr:" ).append( nextLine[10].replaceAll(" ", "_").replaceAll("\\.", "") ).append( " ;");
                     currentTriple.append("\n");
                 }
 
                 if(!nextLine[11].equals("N") && !nextLine[11].equals(""))
                 {
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_city") ).append( " dbr:" ).append( nextLine[11].replaceAll(" ", "_") ).append( " ;");
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_city") ).append( " dbr:" ).append( nextLine[11].replaceAll(" ", "_").replaceAll("\\.", "") ).append( " ;");
                     currentTriple.append("\n");
                 }
 
