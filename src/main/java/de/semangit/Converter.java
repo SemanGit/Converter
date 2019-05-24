@@ -1902,20 +1902,19 @@ public class Converter implements Runnable {
                     currentTriple.append("\n");
                 }
 
-                if(!nextLine[10].equals("N") && !nextLine[10].equals(""))
-                {
+                if(!nextLine[10].equals("N") && !nextLine[10].equals("")) {
                     //there might be unicode characters in there. Need to convert them to UTF-8.
                     String s = nextLine[10];
-                    while(s.contains("\\u"))
-                    {
+                    while (s.contains("\\u")) {
                         int index = s.indexOf("\\u");
                         String part1 = s.substring(0, index);
                         String unicodeChar = s.substring(index + 2, index + 6); //don't want the \\u
                         String part2 = s.substring(index + 6);
                         int intValue = Integer.parseInt(unicodeChar, 16); //hexadecimal
-                        s = part1 + (char)intValue + part2;
+                        s = part1 + (char) intValue + part2;
                     }
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_state") ).append( " dbr:" ).append( s.replaceAll(" ", "_").replaceAll("\\.", "") ).append( " ;");
+                    s = s.replace("'", "\\'").replace(",", "\\,").replace(";", "\\;").replace(".", "").replaceAll(" ", "_").replace("\"", "\\\"");
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_state") ).append( " dbr:" ).append( s ).append( " ;");
                     currentTriple.append("\n");
                 }
 
@@ -1932,7 +1931,8 @@ public class Converter implements Runnable {
                         int intValue = Integer.parseInt(unicodeChar, 16); //hexadecimal
                         s = part1 + (char)intValue + part2;
                     }
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_city") ).append( " dbr:" ).append( s.replaceAll(" ", "_").replaceAll("\\.", "") ).append( " ;");
+                    s = s.replace("'", "\\'").replace(",", "\\,").replace(";", "\\;").replace(".", "").replaceAll(" ", "_").replace("\"", "\\\"");
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_city") ).append( " dbr:" ).append( s ).append( " ;");
                     currentTriple.append("\n");
                 }
 
