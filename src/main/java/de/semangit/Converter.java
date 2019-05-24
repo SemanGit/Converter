@@ -3,6 +3,7 @@ package de.semangit;
 import com.opencsv.CSVReader;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -1903,13 +1904,35 @@ public class Converter implements Runnable {
 
                 if(!nextLine[10].equals("N") && !nextLine[10].equals(""))
                 {
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_state") ).append( " dbr:" ).append( nextLine[10].replaceAll(" ", "_").replaceAll("\\.", "") ).append( " ;");
+                    //there might be unicode characters in there. Need to convert them to UTF-8.
+                    String s = nextLine[10];
+                    while(s.contains("\\u"))
+                    {
+                        int index = s.indexOf("\\u");
+                        String part1 = s.substring(0, index);
+                        String unicodeChar = s.substring(index + 2, index + 6); //don't want the \\u
+                        String part2 = s.substring(index + 6);
+                        int intValue = Integer.parseInt(unicodeChar, 16); //hexadecimal
+                        s = part1 + (char)intValue + part2;
+                    }
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_state") ).append( " dbr:" ).append( s.replaceAll(" ", "_").replaceAll("\\.", "") ).append( " ;");
                     currentTriple.append("\n");
                 }
 
                 if(!nextLine[11].equals("N") && !nextLine[11].equals(""))
                 {
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_city") ).append( " dbr:" ).append( nextLine[11].replaceAll(" ", "_").replaceAll("\\.", "") ).append( " ;");
+                    //there might be unicode characters in there. Need to convert them to UTF-8.
+                    String s = nextLine[11];
+                    while(s.contains("\\u"))
+                    {
+                        int index = s.indexOf("\\u");
+                        String part1 = s.substring(0, index);
+                        String unicodeChar = s.substring(index + 2, index + 6); //don't want the \\u
+                        String part2 = s.substring(index + 6);
+                        int intValue = Integer.parseInt(unicodeChar, 16); //hexadecimal
+                        s = part1 + (char)intValue + part2;
+                    }
+                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_city") ).append( " dbr:" ).append( s.replaceAll(" ", "_").replaceAll("\\.", "") ).append( " ;");
                     currentTriple.append("\n");
                 }
 
@@ -2949,6 +2972,10 @@ public class Converter implements Runnable {
                     writer.newLine();
                     writer.write("@prefix dbo: <http://dbpedia.org/ontology/>.");
                     writer.newLine();
+                    writer.write("@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.");
+                    writer.newLine();
+                    writer.write("@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.");
+                    writer.newLine();
 
                     for (Map.Entry<String, String> entry : entries) {
                         writer.write("@prefix " + entry.getValue() + ": <http://semangit.de/ontology/" + entry.getKey() + "/>.");
@@ -2983,9 +3010,13 @@ public class Converter implements Runnable {
                         final Set<Map.Entry<String, String>> entries = prefixTable.entrySet();
                         writer.write("@prefix semangit: <http://semangit.de/ontology/>.");
                         writer.newLine();
-                        writer.write("@prefix dbr: <http://dbpedia.org/resource/>");
+                        writer.write("@prefix dbr: <http://dbpedia.org/resource/>.");
                         writer.newLine();
-                        writer.write("@prefix dbo: <http://dbpedia.org/ontology/>");
+                        writer.write("@prefix dbo: <http://dbpedia.org/ontology/>.");
+                        writer.newLine();
+                        writer.write("@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.");
+                        writer.newLine();
+                        writer.write("@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.");
                         writer.newLine();
                         printVoID(writer);
 
