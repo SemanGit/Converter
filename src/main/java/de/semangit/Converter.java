@@ -1913,7 +1913,7 @@ public class Converter implements Runnable {
                         int intValue = Integer.parseInt(unicodeChar, 16); //hexadecimal
                         s = part1 + (char) intValue + part2;
                     }
-                    s = s.replace("'", "\\'").replace("‘", "").replace(",", "\\,").replace(";", "\\;").replace(".", "").replaceAll(" ", "_").replace("\"", "\\\"");
+                    s = s.replace("'", "\\'").replace("‘", "").replace(",", "\\,").replace(";", "\\;").replace(".", "").replaceAll(" ", "_").replace("\"", "\\\"").replace('-', '–');
                     currentTriple.append(getPrefix(TAG_Semangit + "github_user_state") ).append( " dbr:" ).append( s ).append( " ;");
                     currentTriple.append("\n");
                 }
