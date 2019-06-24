@@ -1903,9 +1903,11 @@ public class Converter implements Runnable {
                 }
 
                 if(!nextLine[10].equals("N") && !nextLine[10].equals("")) {
+                    boolean containsStupidChars = false; //TODO: we're removing all cities containing weird characters. This needs to be improved
                     //there might be unicode characters in there. Need to convert them to UTF-8.
                     String s = nextLine[10];
                     while (s.contains("\\u")) {
+                        containsStupidChars = true;
                         int index = s.indexOf("\\u");
                         String part1 = s.substring(0, index);
                         String unicodeChar = s.substring(index + 2, index + 6); //don't want the \\u
@@ -1913,17 +1915,21 @@ public class Converter implements Runnable {
                         int intValue = Integer.parseInt(unicodeChar, 16); //hexadecimal
                         s = part1 + (char) intValue + part2;
                     }
-                    s = s.replace("'", "\\'").replace("‘", "").replace(",", "\\,").replace(";", "\\;").replace(".", "").replaceAll(" ", "_").replace("\"", "\\\"").replace('-', '_').replace('–', '_'); //TODO: we should not replace minus by underscore. But blazegraph wont accept a long dash. ffs
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_state") ).append( " dbr:" ).append( s ).append( " ;");
-                    currentTriple.append("\n");
+                    if(!containsStupidChars) {
+                        s = s.replace("'", "\\'").replace("‘", "").replace(",", "\\,").replace(";", "\\;").replace(".", "").replaceAll(" ", "_").replace("\"", "\\\"").replace('-', '_').replace('–', '_'); //TODO: we should not replace minus by underscore. But blazegraph wont accept a long dash. ffs
+                        currentTriple.append(getPrefix(TAG_Semangit + "github_user_state")).append(" dbr:").append(s).append(" ;");
+                        currentTriple.append("\n");
+                    }
                 }
 
                 if(!nextLine[11].equals("N") && !nextLine[11].equals(""))
                 {
+                    boolean containsStupidChars = false;
                     //there might be unicode characters in there. Need to convert them to UTF-8.
                     String s = nextLine[11];
                     while(s.contains("\\u"))
                     {
+                        containsStupidChars = true;
                         int index = s.indexOf("\\u");
                         String part1 = s.substring(0, index);
                         String unicodeChar = s.substring(index + 2, index + 6); //don't want the \\u
@@ -1931,9 +1937,11 @@ public class Converter implements Runnable {
                         int intValue = Integer.parseInt(unicodeChar, 16); //hexadecimal
                         s = part1 + (char)intValue + part2;
                     }
-                    s = s.replace("'", "\\'").replace("‘", "").replace(",", "\\,").replace(";", "\\;").replace(".", "").replaceAll(" ", "_").replace("\"", "\\\"").replace('-', '_').replace('–', '_'); //TODO: we should not replace minus by underscore. But blazegraph wont accept a long dash. ffs
-                    currentTriple.append(getPrefix(TAG_Semangit + "github_user_city") ).append( " dbr:" ).append( s ).append( " ;");
-                    currentTriple.append("\n");
+                    if(!containsStupidChars) {
+                        s = s.replace("'", "\\'").replace("‘", "").replace(",", "\\,").replace(";", "\\;").replace(".", "").replaceAll(" ", "_").replace("\"", "\\\"").replace('-', '_').replace('–', '_'); //TODO: we should not replace minus by underscore. But blazegraph wont accept a long dash. ffs
+                        currentTriple.append(getPrefix(TAG_Semangit + "github_user_city")).append(" dbr:").append(s).append(" ;");
+                        currentTriple.append("\n");
+                    }
                 }
 
                 if(!nextLine[12].equals("N") && !nextLine[12].equals(""))
