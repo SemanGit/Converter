@@ -1913,7 +1913,7 @@ public class Converter implements Runnable {
                         int intValue = Integer.parseInt(unicodeChar, 16); //hexadecimal
                         s = part1 + (char) intValue + part2;
                     }
-                    s = s.replace("'", "\\'").replace(",", "\\,").replace(";", "\\;").replace(".", "").replaceAll(" ", "_").replace("\"", "\\\"");
+                    s = s.replace("'", "\\'").replace("‘", "").replace(",", "\\,").replace(";", "\\;").replace(".", "").replaceAll(" ", "_").replace("\"", "\\\"");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_user_state") ).append( " dbr:" ).append( s ).append( " ;");
                     currentTriple.append("\n");
                 }
@@ -1931,7 +1931,7 @@ public class Converter implements Runnable {
                         int intValue = Integer.parseInt(unicodeChar, 16); //hexadecimal
                         s = part1 + (char)intValue + part2;
                     }
-                    s = s.replace("'", "\\'").replace(",", "\\,").replace(";", "\\;").replace(".", "").replaceAll(" ", "_").replace("\"", "\\\"");
+                    s = s.replace("'", "\\'").replace("‘", "").replace(",", "\\,").replace(";", "\\;").replace(".", "").replaceAll(" ", "_").replace("\"", "\\\"");
                     currentTriple.append(getPrefix(TAG_Semangit + "github_user_city") ).append( " dbr:" ).append( s ).append( " ;");
                     currentTriple.append("\n");
                 }
@@ -2812,7 +2812,6 @@ public class Converter implements Runnable {
     //TODO: This does not belong inside the combined.ttl file, but into a separate void.ttl file. Then we can also add meta info such as number of triples etc.
     private static void printVoID(BufferedWriter w)
     {
-        System.out.println("printvoid called");
         try {
             w.write("@prefix void: <http://rdfs.org/ns/void#> .");
             w.newLine();
